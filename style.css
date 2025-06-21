@@ -524,18 +524,28 @@ body {
   animation: grow-in-from-center 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+#bag-stats-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Replace the old #bag-stats-display rule with this updated one */
 #bag-stats-display {
   display: grid;
   grid-template-columns: repeat(3, auto);
   grid-template-rows: repeat(2, auto);
-  gap: 4px 12px; /* 4px row gap, 12px column gap */
+  gap: 4px 12px;
   justify-items: start;
   align-items: center;
   color: var(--base1);
-  padding: 0.25rem 0.5rem;
-  font-size: 1rem; /* A slightly smaller font for a compact fit */
+  font-size: 1rem;
+  background-color: var(--base02);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
 }
 
+/* The rules for the children of #bag-stats-display remain the same */
 #bag-stats-display > span {
   display: flex;
   align-items: center;
