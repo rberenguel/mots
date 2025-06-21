@@ -57,12 +57,18 @@ body {
   cursor: grab;
   position: relative;
   user-select: none;
-  box-shadow:
-    0 1px 2px rgba(0, 43, 54, 0.1),
-    0 3px 5px rgba(0, 43, 54, 0.15);
-  transition: opacity 0.2s ease-out;
+  box-shadow: 3px 3px 9px 3px black;
+  transition: all 0.2s ease-out; /* Changed to 'all' for smoother transitions */
+
   z-index: 10;
-  text-shadow: 0 1px 2px rgba(0, 43, 54, 0.25);
+}
+
+.letter-tile > span {
+  filter: drop-shadow(1px 1px 2px #999);
+}
+
+.letter-tile .letter-points {
+  filter: drop-shadow(1px 1px 2px #555);
 }
 
 .letter-tile.is-dragging {
