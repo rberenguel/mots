@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mots</title>
+    <link href="./fonts/inter.css" rel="stylesheet">
+    <link rel="stylesheet" href="./fonts/iconoir/iconoir.css" />
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <div class="main-container">
+        <div id="top-bar">
+             <div class="top-bar-section">
+                <div id="round-display">1/10</div>
+            </div>
+            <div id="score-display" class="top-bar-section">
+                <i class="iconoir-pacman" style="font-size: 1.5rem;"></i>
+                <span id="round-score-display">0</span>
+                <span style="font-size: 1.5rem; font-weight: 400; opacity: 0.75;">/</span>
+                <span id="target-score-display" style="font-size: 1.5rem; font-weight: 400; opacity: 0.75;">30</span>
+            </div>
+             <div class="top-bar-section">
+                <div id="plays-counter"><i class="iconoir-play"></i><span id="plays-display">10</span></div>
+            </div>
+        </div>
+
+        <div id="letter-grid"></div>
+
+        <div class="controls-container">
+            <button id="shuffle-button" title="Shuffle Letters" class="icon-btn"> <i class="iconoir-shuffle"></i> </button>
+            <button id="redraw-button" title="Get a new hand" class="icon-btn"> <i class="iconoir-refresh"></i> <span id="redraw-badge" class="badge"></span> </button>
+            <button id="submit-word-button" title="Submit Word" class="icon-btn"> <i class="iconoir-upload"></i> </button>
+            <button id="help-button" title="Help" class="icon-btn"> <i class="iconoir-question-mark"></i> </button>
+        </div>
+        
+        <div id="answer-container">
+            <div id="answer-area"></div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="powerup-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Round Complete!</h2>
+            <p>Choose a power-up for the next round:</p>
+            <div id="powerup-options"></div>
+        </div>
+    </div>
+    <div id="game-over-modal" class="modal-overlay">
+         <div class="modal-content">
+            <h2>Game Over</h2>
+            <p>You reached Round <b id="final-round"></b>.</p>
+            <p style="font-size: 1.125rem; line-height: 1.75rem;">Final Score: <b id="final-score"></b></p>
+            <button id="restart-button">Restart Game</button>
+        </div>
+    </div>
+    <div id="help-modal" class="modal-overlay">
+         <div class="modal-content">
+            <h2>How to Play</h2>
+            <div class="help-text">
+                <p>• The game has 10 rounds. Each round requires more points to pass.</p>
+                <p>• You start with 10 plays. You gain 4 extra plays after each round.</p>
+                <p>• Words must be at least 4 letters long.</p>
+                <p>• After each round, choose one of two power-ups. Choose wisely!</p>
+                <hr>
+                <p class="help-icon-row"><span class="icon-btn"><i class="iconoir-shuffle" style="color: var(--orange);"></i></span> Shuffles the current letters to help you find words.</p>
+                <p class="help-icon-row"><span class="icon-btn"><i class="iconoir-refresh" style="color: var(--cyan);"></i></span> Redraws your hand from the bag. Uses are limited!</p>
+                <p class="help-icon-row"><span class="icon-btn"><i class="iconoir-upload" style="color: var(--green);"></i></span> Submits your word for scoring.</p>
+            </div>
+            <button id="close-help-button">Got it!</button>
+        </div>
+    </div>
+    
+ <script type="module" src="js/main.js"></script>
+</body>
+</html>
