@@ -27,6 +27,19 @@ export const letterDistribution = {
   Z: { c: 1, p: 10 },
 };
 
+export const BLACK_TILES_PER_ROUND = {
+  1: 2,
+  2: 2,
+  3: 3,
+  4: 3,
+  5: 5,
+  6: 5,
+  7: 8,
+  8: 8,
+  9: 13,
+  10: 13,
+};
+
 export const GRID_SIZE = 16;
 export const ANSWER_SLOTS = 10;
 export const TOTAL_ROUNDS = 10;

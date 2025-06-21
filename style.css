@@ -100,11 +100,27 @@ body {
   cursor: pointer;
 }
 
+.letter-tile.black-tile {
+  background-color: #000;
+  border-color: #111;
+  cursor: not-allowed;
+}
+
 .grid-slot .letter-tile {
   font-size: 24px;
 }
 .answer-slot .letter-tile {
   font-size: 18px;
+}
+
+.multiplier-text {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 10px;
+  color: var(--magenta);
+  font-weight: 800;
+  z-index: 1;
 }
 
 .letter-points {
@@ -115,6 +131,18 @@ body {
   font-weight: normal;
   color: var(--base01);
   text-shadow: none;
+}
+
+.letter-points.boosted {
+  font-weight: bold;
+  color: green;
+  font-size: 60%;
+}
+
+.letter-points.nerfed {
+  font-weight: bold;
+  color: red;
+  font-size: 60%;
 }
 
 .answer-slot,

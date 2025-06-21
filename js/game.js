@@ -11,7 +11,14 @@ let currentRound = 0,
   totalPlays = 0,
   redrawsLeft = 2,
   nextTileId = 0;
-let playerPowerups = { wildcards: 0, pointBoosts: [] };
+
+let playerPowerups = {
+  wildcards: 0,
+  pointBoosts: [],
+  pointNerfs: [],
+  blackTileModifier: 0,
+  positionalMultiplier: null,
+};
 
 export async function initializeGame() {
   try {
@@ -32,8 +39,15 @@ export function startGame() {
   currentRound = 0;
   totalPlays = 10;
   redrawsLeft = 2;
-  playerPowerups = { wildcards: 0, pointBoosts: [] };
+  playerPowerups = {
+    wildcards: 0,
+    pointBoosts: [],
+    pointNerfs: [],
+    blackTileModifier: 0,
+    positionalMultiplier: null,
+  };
   ui.ui.gameOverModal.classList.remove("visible");
+  ui.updateMultiplierDisplay(null); // Clear any multiplier display
   startNewRound();
 }
 
@@ -48,6 +62,9 @@ function startNewRound() {
   ui.ui.roundDisplay.textContent = `${currentRound}/${cfg.TOTAL_ROUNDS}`;
   ui.ui.targetScoreDisplay.textContent = targetScore;
   ui.ui.roundScoreDisplay.textContent = "0";
+
+  ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier); // Add this line
+
   checkAnswerLength();
 
   if (currentRound > 1 && currentRound <= cfg.TOTAL_ROUNDS) {
@@ -64,17 +81,53 @@ function resetBoardForNewRound() {
   refillGrid();
 }
 
+// Replace the existing createLetterBag function
 function createLetterBag() {
   letterBag = [];
   for (const letter in cfg.letterDistribution)
     for (let i = 0; i < cfg.letterDistribution[letter].c; i++)
-      letterBag.push({ letter, points: cfg.letterDistribution[letter].p });
+      letterBag.push({
+        letter,
+        points: cfg.letterDistribution[letter].p,
+        isBoosted: false,
+        isNerfed: false,
+      });
+
   for (let i = 0; i < playerPowerups.wildcards; i++)
-    letterBag.push({ letter: "*", points: 0 });
+    letterBag.push({
+      letter: "*",
+      points: 0,
+      isBoosted: false,
+      isNerfed: false,
+    });
+
+  // Apply boosts
   playerPowerups.pointBoosts.forEach(() => {
     const tileIndex = Math.floor(Math.random() * letterBag.length);
-    letterBag[tileIndex].points++;
+    if (letterBag[tileIndex].letter !== "*") {
+      letterBag[tileIndex].points++;
+      letterBag[tileIndex].isBoosted = true;
+    }
   });
+
+  // Apply nerfs
+  playerPowerups.pointNerfs.forEach(() => {
+    const tileIndex = Math.floor(Math.random() * letterBag.length);
+    const tile = letterBag[tileIndex];
+    if (tile.letter !== "*" && tile.points > 0) {
+      tile.points--;
+      tile.isNerfed = true;
+    }
+  });
+
+  let blackTileCount =
+    (cfg.BLACK_TILES_PER_ROUND[currentRound] || 0) +
+    playerPowerups.blackTileModifier;
+  if (blackTileCount < 0) blackTileCount = 0;
+
+  for (let i = 0; i < blackTileCount; i++) {
+    letterBag.push({ letter: "BLACK", points: 0, isBlackTile: true });
+  }
 }
 
 function updatePlays(change) {
@@ -106,30 +159,43 @@ export function handleRedraw() {
   if (redrawsLeft <= 0) return;
   triggerHaptic();
   redrawsLeft--;
-  document.querySelectorAll(".letter-tile").forEach((t) => {
-    if (!t.classList.contains("is-ghost"))
-      letterBag.push({
-        letter: t.dataset.letter,
-        points: parseInt(t.dataset.points, 10),
-      });
-    t.remove();
-  });
-  document.querySelectorAll(".grid-slot").forEach((s) => (s.innerHTML = ""));
+
+  // Remove all tiles from the letter grid. These tiles are
+  // discarded and not returned to the letter bag.
+  document
+    .querySelectorAll("#letter-grid .letter-tile")
+    .forEach((t) => t.remove());
+
+  // Refill the grid with completely new tiles from the bag.
   refillGrid();
   checkAnswerLength();
 }
 
+// Replace the existing handleSubmitWord function
 export function handleSubmitWord() {
   let word = "",
     basePoints = 0,
     bonusPoints = 0,
     placedTiles = [];
+  let wordPosition = 0; // Tracks the position of a letter within the submitted word
+
   ui.ui.answerArea.querySelectorAll(".answer-slot").forEach((s) => {
     const t = s.querySelector(".letter-tile");
     if (t) {
       placedTiles.push(t);
       word += t.dataset.letter;
-      basePoints += parseInt(t.dataset.points, 10);
+
+      let tilePoints = parseInt(t.dataset.points, 10);
+      // Apply positional multiplier if active
+      if (
+        playerPowerups.positionalMultiplier &&
+        wordPosition === playerPowerups.positionalMultiplier.position - 1
+      ) {
+        tilePoints *= playerPowerups.positionalMultiplier.multiplier;
+      }
+      basePoints += tilePoints;
+      wordPosition++;
+
       if (cfg.bonusSlots[s.dataset.index])
         bonusPoints += cfg.bonusSlots[s.dataset.index];
     }
@@ -182,6 +248,7 @@ function isWordValid(word) {
   return false;
 }
 
+// Replace the existing choosePowerup function
 function choosePowerup() {
   const powerupList = [
     {
@@ -203,6 +270,48 @@ function choosePowerup() {
       apply: () => playerPowerups.pointBoosts.push(1),
     },
   ];
+
+  const upcomingBlackTiles =
+    (cfg.BLACK_TILES_PER_ROUND[currentRound] || 0) +
+    playerPowerups.blackTileModifier;
+  if (upcomingBlackTiles > 0) {
+    powerupList.push({
+      id: "remove_black_tile",
+      text: "Remove a black tile from the bag (permanent)",
+      apply: () => {
+        playerPowerups.blackTileModifier--;
+      },
+    });
+  }
+
+  powerupList.push({
+    id: "add_black_tile",
+    text: "Add a black tile to the bag for +2 plays",
+    apply: () => {
+      playerPowerups.blackTileModifier++;
+      updatePlays(2);
+    },
+  });
+  powerupList.push({
+    id: "point_nerf",
+    text: "-1 to a random letter tile for +1 play",
+    apply: () => {
+      playerPowerups.pointNerfs.push(1);
+      updatePlays(1);
+    },
+  });
+  if (!playerPowerups.positionalMultiplier) {
+    powerupList.push({
+      id: "positional_multiplier",
+      text: "3x score on a random letter position (1-5)",
+      apply: () => {
+        const N = Math.floor(Math.random() * 5) + 1;
+        playerPowerups.positionalMultiplier = { position: N, multiplier: 3 };
+        ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
+      },
+    });
+  }
+
   ui.presentPowerupChoice(powerupList, (chosenOption) => {
     chosenOption.apply();
     resetBoardForNewRound();

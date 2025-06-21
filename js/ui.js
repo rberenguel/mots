@@ -42,17 +42,49 @@ export function createAnswerSlots() {
   }
 }
 
+export function updateMultiplierDisplay(multiplier) {
+  document.querySelectorAll(".multiplier-text").forEach((el) => el.remove());
+
+  if (multiplier) {
+    const slotIndex = multiplier.position - 1; // Convert to 0-based index
+    const targetSlot = ui.answerArea.querySelector(
+      `.answer-slot[data-index='${slotIndex}']`,
+    );
+    if (targetSlot) {
+      const multiplierEl = document.createElement("div");
+      multiplierEl.className = "multiplier-text";
+      multiplierEl.textContent = `x${multiplier.multiplier}`;
+      targetSlot.appendChild(multiplierEl);
+    }
+  }
+}
+
+// Replace the existing createLetterTile function
 export function createLetterTile(letterObj, nextId) {
   const tile = document.createElement("div");
   tile.className = "letter-tile letter-tile-bounce";
   tile.id = "tile-" + nextId;
-  tile.dataset.letter = letterObj.letter;
-  tile.dataset.points = letterObj.points;
-  tile.draggable = true;
-  tile.innerHTML =
-    letterObj.letter === "*"
-      ? `<i class="iconoir-star-solid text-2xl" style="color: var(--yellow)"></i>`
-      : `<span>${letterObj.letter}</span><span class="letter-points">${letterObj.points}</span>`;
+
+  if (letterObj.isBlackTile) {
+    tile.classList.add("black-tile");
+    tile.draggable = false;
+  } else {
+    tile.dataset.letter = letterObj.letter;
+    tile.dataset.points = letterObj.points;
+    tile.draggable = true;
+
+    let pointsClasses = "letter-points";
+    if (letterObj.isBoosted) pointsClasses += " boosted";
+    if (letterObj.isNerfed) pointsClasses += " nerfed";
+
+    const pointsHTML = `<span class="${pointsClasses}">${letterObj.points}</span>`;
+
+    tile.innerHTML =
+      letterObj.letter === "*"
+        ? `<i class="iconoir-star-solid text-2xl" style="color: var(--yellow)"></i>`
+        : `<span>${letterObj.letter}</span>${pointsHTML}`;
+  }
+
   tile.addEventListener("animationend", () =>
     tile.classList.remove("letter-tile-bounce"),
   );
