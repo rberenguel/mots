@@ -51,6 +51,28 @@
         <button id="help-button" title="Help" class="icon-btn">
           <i class="iconoir-question-mark"></i>
         </button>
+        <div id="bag-stats-display">
+          <span title="Letters Remaining"
+            ><i class="iconoir-glass-empty"></i
+            ><span id="bag-total-display">0</span></span
+          >
+          <span title="Black Tiles"
+            ><span class="emoji">⬛</span
+            ><span id="bag-black-display">0</span></span
+          >
+          <span title="Wildcards"
+            ><span class="emoji">⭐</span
+            ><span id="bag-wildcard-display">0</span></span
+          >
+          <span title="Boosted Tiles"
+            ><i class="iconoir-plus-square" style="color: var(--green)"></i
+            ><span id="bag-boosted-display">0</span></span
+          >
+          <span title="Nerfed Tiles"
+            ><i class="iconoir-minus-square" style="color: var(--red)"></i
+            ><span id="bag-nerfed-display">0</span></span
+          >
+        </div>
       </div>
 
       <div id="answer-container">
@@ -62,7 +84,7 @@
     <div id="powerup-modal" class="modal-overlay">
       <div class="modal-content">
         <h2>Round Complete!</h2>
-        <p>Choose a power-up for the next round:</p>
+        <p>Choose a power-up for the next rounds:</p>
         <div id="powerup-options"></div>
       </div>
     </div>
@@ -84,7 +106,12 @@
             • The game has 10 rounds. Each round requires more points to pass.
           </p>
           <p>
-            • You start with 10 plays. You gain 4 extra plays after each round.
+            • There are black tiles in the letter bag. More with each passing
+            round.
+          </p>
+          <p>
+            • You start with 10 plays. You gain 4 extra plays after each round
+            and also with some powerups.
           </p>
           <p>• Words must be at least 4 letters long.</p>
           <p>• After each round, choose one of two power-ups. Choose wisely!</p>

@@ -22,7 +22,20 @@ export const ui = {
   restartButton: document.getElementById("restart-button"),
   helpModal: document.getElementById("help-modal"),
   closeHelpButton: document.getElementById("close-help-button"),
+  bagTotalDisplay: document.getElementById("bag-total-display"),
+  bagBlackDisplay: document.getElementById("bag-black-display"),
+  bagWildcardDisplay: document.getElementById("bag-wildcard-display"),
+  bagBoostedDisplay: document.getElementById("bag-boosted-display"),
+  bagNerfedDisplay: document.getElementById("bag-nerfed-display"),
 };
+
+export function updateBagStatsDisplay(stats) {
+  ui.bagTotalDisplay.textContent = stats.total;
+  ui.bagBlackDisplay.textContent = stats.black;
+  ui.bagWildcardDisplay.textContent = stats.wildcard;
+  ui.bagBoostedDisplay.textContent = stats.boosted;
+  ui.bagNerfedDisplay.textContent = stats.nerfed;
+}
 
 export function createGridSlots(size) {
   for (let i = 0; i < size; i++)
@@ -103,13 +116,21 @@ export function updatePlaysDisplay(count) {
 }
 
 export function flashTiles(tiles, type) {
+  const isExitAnimation = type === "green";
+  const className = isExitAnimation ? "flash-green" : "shake-and-flash-red";
+
   tiles.forEach((t) => {
-    t.classList.add(type === "green" ? "flash-green" : "flash-red");
-    t.addEventListener(
-      "animationend",
-      () => t.classList.remove("flash-green", "flash-red"),
-      { once: true },
-    );
+    t.classList.add(className);
+
+    if (!isExitAnimation) {
+      t.addEventListener(
+        "animationend",
+        () => {
+          t.classList.remove(className);
+        },
+        { once: true },
+      );
+    }
   });
 }
 

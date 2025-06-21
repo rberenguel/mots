@@ -51,6 +51,17 @@ export function startGame() {
   startNewRound();
 }
 
+function calculateAndDisplayBagStats() {
+  const stats = {
+    total: letterBag.length,
+    black: letterBag.filter((t) => t.isBlackTile).length,
+    wildcard: letterBag.filter((t) => t.letter === "*").length,
+    boosted: letterBag.filter((t) => t.isBoosted && !t.isNerfed).length,
+    nerfed: letterBag.filter((t) => t.isNerfed).length,
+  };
+  ui.updateBagStatsDisplay(stats);
+}
+
 function startNewRound() {
   currentRound++;
   roundScore = 0;
@@ -128,14 +139,12 @@ function createLetterBag() {
   for (let i = 0; i < blackTileCount; i++) {
     letterBag.push({ letter: "BLACK", points: 0, isBlackTile: true });
   }
+  calculateAndDisplayBagStats();
 }
 
 function updatePlays(change) {
   totalPlays += change;
   ui.updatePlaysDisplay(totalPlays);
-  if (totalPlays <= 0 && !ui.ui.gameOverModal.classList.contains("visible")) {
-    ui.showGameOverModal(false, currentRound, totalScore);
-  }
 }
 
 function refillGrid(count) {
@@ -153,6 +162,7 @@ function refillGrid(count) {
     }
   }
   ui.updateRedrawBadge(redrawsLeft);
+  calculateAndDisplayBagStats();
 }
 
 export function handleRedraw() {
@@ -171,13 +181,12 @@ export function handleRedraw() {
   checkAnswerLength();
 }
 
-// Replace the existing handleSubmitWord function
 export function handleSubmitWord() {
   let word = "",
     basePoints = 0,
     bonusPoints = 0,
     placedTiles = [];
-  let wordPosition = 0; // Tracks the position of a letter within the submitted word
+  let wordPosition = 0;
 
   ui.ui.answerArea.querySelectorAll(".answer-slot").forEach((s) => {
     const t = s.querySelector(".letter-tile");
@@ -186,7 +195,6 @@ export function handleSubmitWord() {
       word += t.dataset.letter;
 
       let tilePoints = parseInt(t.dataset.points, 10);
-      // Apply positional multiplier if active
       if (
         playerPowerups.positionalMultiplier &&
         wordPosition === playerPowerups.positionalMultiplier.position - 1
@@ -203,18 +211,15 @@ export function handleSubmitWord() {
 
   if (word.length < cfg.MIN_WORD_LENGTH) return;
   triggerHaptic();
-  updatePlays(-1);
-  if (totalPlays < 0) {
-    totalPlays = 0;
-    return;
-  }
 
   if (isWordValid(word)) {
+    updatePlays(-1);
     const wordScore = basePoints + bonusPoints;
     totalScore += wordScore;
     roundScore += wordScore;
     ui.ui.roundScoreDisplay.textContent = roundScore;
     ui.flashTiles(placedTiles, "green");
+
     setTimeout(() => {
       placedTiles.forEach((t) => {
         const o = document.getElementById(t.dataset.originId);
@@ -222,14 +227,23 @@ export function handleSubmitWord() {
         t.remove();
       });
       refillGrid(placedTiles.length);
-      if (roundScore >= targetScore && currentRound < cfg.TOTAL_ROUNDS)
+
+      const roundComplete = roundScore >= targetScore;
+      if (roundComplete && currentRound < cfg.TOTAL_ROUNDS) {
         startNewRound();
-      else if (roundScore >= targetScore && currentRound >= cfg.TOTAL_ROUNDS)
+      } else if (roundComplete && currentRound >= cfg.TOTAL_ROUNDS) {
         ui.showGameOverModal(true, currentRound, totalScore);
+      } else if (totalPlays <= 0) {
+        ui.showGameOverModal(false, currentRound, totalScore);
+      }
+
       checkAnswerLength();
-    }, 700);
+    }, 1000);
   } else {
     ui.flashTiles(placedTiles, "red");
+    if (totalPlays <= 0) {
+      ui.showGameOverModal(false, currentRound, totalScore);
+    }
   }
 }
 
