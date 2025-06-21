@@ -2,15 +2,22 @@ import * as cfg from "./config.js";
 import * as ui from "./ui.js";
 import { triggerHaptic } from "./haptic.js";
 
-let letterBag = [], wordList = new Set();
-let totalScore = 0, roundScore = 0, targetScore = 0;
-let currentRound = 0, totalPlays = 0, redrawsLeft = 2, nextTileId = 0;
+let letterBag = [],
+  wordList = new Set();
+let totalScore = 0,
+  roundScore = 0,
+  targetScore = 0;
+let currentRound = 0,
+  totalPlays = 0,
+  redrawsLeft = 2,
+  nextTileId = 0;
 let playerPowerups = { wildcards: 0, pointBoosts: [] };
 
 export async function initializeGame() {
   try {
-    const response = await fetch("dict/words.txt");
-    wordList = new Set((await response.text()).split("\r\n"));
+    const response = await fetch("./dict/words.txt");
+    wordList = new Set((await response.text()).split("\n"));
+    window.wordList = wordList;
   } catch (error) {
     console.error("Failed to load word list:", error);
   }
@@ -36,7 +43,8 @@ function startNewRound() {
   if (currentRound > 1) totalPlays += 4;
   updatePlays(0);
 
-  targetScore = 20 + (currentRound <= 6 ? currentRound * 10 : 60 + (currentRound - 6) * 20);
+  targetScore =
+    20 + (currentRound <= 6 ? currentRound * 10 : 60 + (currentRound - 6) * 20);
   ui.ui.roundDisplay.textContent = `${currentRound}/${cfg.TOTAL_ROUNDS}`;
   ui.ui.targetScoreDisplay.textContent = targetScore;
   ui.ui.roundScoreDisplay.textContent = "0";
@@ -78,12 +86,17 @@ function updatePlays(change) {
 }
 
 function refillGrid(count) {
-  const emptySlots = Array.from(ui.ui.letterGrid.querySelectorAll(".grid-slot:not(:has(.letter-tile))"));
+  const emptySlots = Array.from(
+    ui.ui.letterGrid.querySelectorAll(".grid-slot:not(:has(.letter-tile))"),
+  );
   for (let i = 0; i < (count || emptySlots.length); i++) {
     if (letterBag.length === 0) createLetterBag();
     if (emptySlots[i]) {
-        const letter = letterBag.splice(Math.floor(Math.random() * letterBag.length), 1)[0]
-        emptySlots[i].appendChild(ui.createLetterTile(letter, nextTileId++));
+      const letter = letterBag.splice(
+        Math.floor(Math.random() * letterBag.length),
+        1,
+      )[0];
+      emptySlots[i].appendChild(ui.createLetterTile(letter, nextTileId++));
     }
   }
   ui.updateRedrawBadge(redrawsLeft);
@@ -95,7 +108,10 @@ export function handleRedraw() {
   redrawsLeft--;
   document.querySelectorAll(".letter-tile").forEach((t) => {
     if (!t.classList.contains("is-ghost"))
-      letterBag.push({ letter: t.dataset.letter, points: parseInt(t.dataset.points, 10) });
+      letterBag.push({
+        letter: t.dataset.letter,
+        points: parseInt(t.dataset.points, 10),
+      });
     t.remove();
   });
   document.querySelectorAll(".grid-slot").forEach((s) => (s.innerHTML = ""));
@@ -104,21 +120,28 @@ export function handleRedraw() {
 }
 
 export function handleSubmitWord() {
-  let word = "", basePoints = 0, bonusPoints = 0, placedTiles = [];
+  let word = "",
+    basePoints = 0,
+    bonusPoints = 0,
+    placedTiles = [];
   ui.ui.answerArea.querySelectorAll(".answer-slot").forEach((s) => {
     const t = s.querySelector(".letter-tile");
     if (t) {
       placedTiles.push(t);
       word += t.dataset.letter;
       basePoints += parseInt(t.dataset.points, 10);
-      if (cfg.bonusSlots[s.dataset.index]) bonusPoints += cfg.bonusSlots[s.dataset.index];
+      if (cfg.bonusSlots[s.dataset.index])
+        bonusPoints += cfg.bonusSlots[s.dataset.index];
     }
   });
 
   if (word.length < cfg.MIN_WORD_LENGTH) return;
   triggerHaptic();
   updatePlays(-1);
-  if (totalPlays < 0) { totalPlays = 0; return; }
+  if (totalPlays < 0) {
+    totalPlays = 0;
+    return;
+  }
 
   if (isWordValid(word)) {
     const wordScore = basePoints + bonusPoints;
@@ -133,8 +156,10 @@ export function handleSubmitWord() {
         t.remove();
       });
       refillGrid(placedTiles.length);
-      if (roundScore >= targetScore && currentRound < cfg.TOTAL_ROUNDS) startNewRound();
-      else if (roundScore >= targetScore && currentRound >= cfg.TOTAL_ROUNDS) ui.showGameOverModal(true, currentRound, totalScore);
+      if (roundScore >= targetScore && currentRound < cfg.TOTAL_ROUNDS)
+        startNewRound();
+      else if (roundScore >= targetScore && currentRound >= cfg.TOTAL_ROUNDS)
+        ui.showGameOverModal(true, currentRound, totalScore);
       checkAnswerLength();
     }, 700);
   } else {
@@ -148,6 +173,7 @@ export function checkAnswerLength() {
 }
 
 function isWordValid(word) {
+  console.log(`Checking ${word}`);
   if (!word.includes("*")) return wordList.has(word.toLowerCase());
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
   for (let char of alphabet) {
@@ -158,12 +184,27 @@ function isWordValid(word) {
 
 function choosePowerup() {
   const powerupList = [
-    { id: "redraw", text: "Gain 2 Redraws", apply: () => { redrawsLeft += 2; ui.updateRedrawBadge(redrawsLeft); }},
-    { id: "wildcard", text: "Add a Wildcard (*) to the bag", apply: () => playerPowerups.wildcards++ },
-    { id: "pointboost", text: "+1 to a random letter tile", apply: () => playerPowerups.pointBoosts.push(1) },
+    {
+      id: "redraw",
+      text: "Gain 2 Redraws",
+      apply: () => {
+        redrawsLeft += 2;
+        ui.updateRedrawBadge(redrawsLeft);
+      },
+    },
+    {
+      id: "wildcard",
+      text: "Add a Wildcard (*) to the bag",
+      apply: () => playerPowerups.wildcards++,
+    },
+    {
+      id: "pointboost",
+      text: "+1 to a random letter tile",
+      apply: () => playerPowerups.pointBoosts.push(1),
+    },
   ];
   ui.presentPowerupChoice(powerupList, (chosenOption) => {
-      chosenOption.apply();
-      resetBoardForNewRound();
+    chosenOption.apply();
+    resetBoardForNewRound();
   });
 }

@@ -1,11 +1,17 @@
 import { ui, shuffleGridAnimation } from "./ui.js";
-import { startGame, handleRedraw, handleSubmitWord, checkAnswerLength } from "./game.js";
+import {
+  startGame,
+  handleRedraw,
+  handleSubmitWord,
+  checkAnswerLength,
+} from "./game.js";
 import { triggerHaptic } from "./haptic.js";
 
 let draggedTile = null;
 let touchDragTile = null;
 let touchStartPos = { x: 0, y: 0 };
-
+let isDragging = false;
+const DRAG_THRESHOLD = 5; // Minimum distance in pixels to trigger a drag
 
 export function addEventListeners() {
   ui.restartButton.addEventListener("click", startGame);
@@ -17,147 +23,238 @@ export function addEventListeners() {
 }
 
 function addHelpModalListeners() {
-    ui.helpButton.addEventListener("click", () => ui.helpModal.classList.add("visible"));
-    ui.closeHelpButton.addEventListener("click", () => {
-        triggerHaptic();
-        ui.helpModal.classList.remove("visible");
-    });
-    ui.helpModal.addEventListener("click", (e) => {
-        if (e.target === ui.helpModal) {
-            triggerHaptic();
-            ui.helpModal.classList.remove("visible");
-        }
-    });
+  ui.helpButton.addEventListener("click", () =>
+    ui.helpModal.classList.add("visible"),
+  );
+  ui.closeHelpButton.addEventListener("click", () => {
+    triggerHaptic();
+    ui.helpModal.classList.remove("visible");
+  });
+  ui.helpModal.addEventListener("click", (e) => {
+    if (e.target === ui.helpModal) {
+      triggerHaptic();
+      ui.helpModal.classList.remove("visible");
+    }
+  });
 }
 
 function addTileInteractionListeners() {
-    // Click/Tap to move
-    ui.letterGrid.addEventListener("click", handleGridClick);
-    ui.answerArea.addEventListener("click", handleAnswerAreaClick);
-    
-    // Mouse Drag and Drop
-    document.addEventListener("dragstart", handleDragStart);
-    document.addEventListener("dragend", handleDragEnd);
-    document.addEventListener("dragover", (e) => e.preventDefault());
-    document.addEventListener("drop", handleDrop);
+  // Click/Tap to move
+  ui.letterGrid.addEventListener("click", handleGridClick);
+  ui.answerArea.addEventListener("click", handleAnswerAreaClick);
 
-    // Touch Drag and Drop
-    document.addEventListener("touchstart", handleTouchStart, { passive: false });
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchend", handleTouchEnd);
+  // Mouse Drag and Drop
+  document.addEventListener("dragstart", handleDragStart);
+  document.addEventListener("dragend", handleDragEnd);
+  document.addEventListener("dragover", (e) => e.preventDefault());
+  document.addEventListener("drop", handleDrop);
+
+  // Touch Drag and Drop
+  document.addEventListener("touchstart", handleTouchStart, { passive: false });
+  document.addEventListener("touchmove", handleTouchMove, { passive: false });
+  document.addEventListener("touchend", handleTouchEnd);
 }
 
-// --- Click/Tap Handlers ---
 function handleGridClick(e) {
-    triggerHaptic();
-    const tile = e.target.closest(".letter-tile:not(.is-ghost)");
-    if (!tile) return;
-    const emptySlot = Array.from(ui.answerArea.children).find((s) => !s.hasChildNodes() || s.querySelector('.bonus-text'));
-    if (emptySlot) {
-        placeTileInAnswer(tile, emptySlot);
+  triggerHaptic();
+  const clickedTile = e.target.closest(".letter-tile");
+  if (!clickedTile) return;
+
+  // Case 1: The user clicked a ghost tile in the letter grid.
+  // The goal is to bring the corresponding tile back from the answer area.
+  if (clickedTile.classList.contains("is-ghost")) {
+    const originId = clickedTile.id;
+
+    // Find the tile in the answer area that came from this grid slot.
+    const tileInAnswer = ui.answerArea.querySelector(
+      `[data-origin-id="${originId}"]`,
+    );
+
+    if (tileInAnswer) {
+      // Remove the tile from the answer area.
+      tileInAnswer.remove();
+
+      // "Un-ghost" the original tile in the letter grid, making it active again.
+      clickedTile.classList.remove("is-ghost");
+
+      // Update the state of the submit button.
+      checkAnswerLength();
     }
+  }
+  // Case 2: The user clicked a normal, active tile.
+  // This preserves the logic from our last fix.
+  else {
+    // Find the first available slot in the answer area.
+    const emptySlot = Array.from(ui.answerArea.children).find(
+      (s) => !s.querySelector(".letter-tile"),
+    );
+
+    if (emptySlot) {
+      placeTileInAnswer(clickedTile, emptySlot);
+    }
+  }
 }
 
 function handleAnswerAreaClick(e) {
-    triggerHaptic();
-    const tile = e.target.closest(".letter-tile");
-    if (tile && tile.parentElement.classList.contains("answer-slot")) {
-        const originTile = document.getElementById(tile.dataset.originId);
-        if (originTile) originTile.classList.remove("is-ghost");
-        tile.remove();
-        checkAnswerLength();
-    }
+  triggerHaptic();
+  const tile = e.target.closest(".letter-tile");
+  if (tile && tile.parentElement.classList.contains("answer-slot")) {
+    const originTile = document.getElementById(tile.dataset.originId);
+    if (originTile) originTile.classList.remove("is-ghost");
+    tile.remove();
+    checkAnswerLength();
+  }
 }
 
 // --- Mouse D&D Handlers ---
 function handleDragStart(e) {
-    const tile = e.target.closest(".letter-tile");
-    if (tile && !tile.classList.contains("is-ghost")) {
-        draggedTile = tile;
-        setTimeout(() => { tile.style.visibility = "hidden"; }, 0);
-    } else {
-        e.preventDefault();
-    }
+  const tile = e.target.closest(".letter-tile");
+  if (tile && !tile.classList.contains("is-ghost")) {
+    draggedTile = tile;
+    setTimeout(() => {
+      tile.style.visibility = "hidden";
+    }, 0);
+  } else {
+    e.preventDefault();
+  }
 }
 
 function handleDragEnd() {
-    if (draggedTile) {
-        draggedTile.style.visibility = "visible";
-        draggedTile = null;
-    }
+  if (draggedTile) {
+    draggedTile.style.visibility = "visible";
+    draggedTile = null;
+  }
 }
 
 function handleDrop(e) {
-    e.preventDefault();
-    if (!draggedTile) return;
-    const answerSlot = e.target.closest(".answer-slot");
-    if (answerSlot) {
-        placeTileInAnswer(draggedTile, answerSlot);
-    }
+  e.preventDefault();
+  if (!draggedTile) return;
+  const answerSlot = e.target.closest(".answer-slot");
+  if (answerSlot) {
+    placeTileInAnswer(draggedTile, answerSlot);
+  }
 }
 
-
-// --- Touch D&D Handlers ---
 function handleTouchStart(e) {
-    const tile = e.target.closest(".letter-tile:not(.is-ghost)");
-    if (tile && ui.letterGrid.contains(tile)) {
-        e.preventDefault();
-        draggedTile = tile;
-        touchDragTile = tile.cloneNode(true);
-        touchDragTile.classList.add('is-dragging');
-        document.body.appendChild(touchDragTile);
-        const touch = e.touches[0];
-        moveElement(touch.clientX, touch.clientY);
-        draggedTile.style.opacity = '0.3';
-    }
+  const tile = e.target.closest(".letter-tile:not(.is-ghost)");
+  if (tile && ui.letterGrid.contains(tile)) {
+    draggedTile = tile;
+    const touch = e.touches[0];
+    touchStartPos = { x: touch.clientX, y: touch.clientY };
+    isDragging = false; // Reset dragging state
+  }
 }
 
 function handleTouchMove(e) {
-    if (draggedTile && touchDragTile) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        moveElement(touch.clientX, touch.clientY);
-    }
+  if (!draggedTile) return;
+
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchStartPos.x;
+  const dy = touch.clientY - touchStartPos.y;
+
+  // Only start dragging if the finger has moved beyond a certain threshold
+  if (
+    !isDragging &&
+    (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)
+  ) {
+    isDragging = true;
+    e.preventDefault(); // Prevent page scrolling
+    triggerHaptic();
+
+    // Get the exact size of the tile before we mess with it
+    const rect = draggedTile.getBoundingClientRect();
+
+    // Clone the tile to create a draggable copy
+    touchDragTile = draggedTile.cloneNode(true);
+    touchDragTile.classList.add("is-touch-dragging");
+
+    // Set the clone's size explicitly so it doesn't expand to fill the body
+    touchDragTile.style.width = `${rect.width}px`;
+    touchDragTile.style.height = `${rect.height}px`;
+
+    document.body.appendChild(touchDragTile);
+
+    // Position the clone under the finger
+    moveElement(
+      touch.clientX + rect.width / 2,
+      touch.clientY + rect.height / 2,
+    );
+
+    // Make the original tile in the grid a "ghost"
+    draggedTile.style.opacity = "0.3";
+  }
+
+  if (isDragging) {
+    e.preventDefault();
+    moveElement(touch.clientX, touch.clientY);
+  }
 }
 
 function handleTouchEnd(e) {
-    if (draggedTile && touchDragTile) {
-        const touch = e.changedTouches[0];
-        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        const answerSlot = dropTarget ? dropTarget.closest(".answer-slot") : null;
-        if (answerSlot) {
-            placeTileInAnswer(draggedTile, answerSlot);
-        }
-        document.body.removeChild(touchDragTile);
-        draggedTile.style.opacity = '1';
-        draggedTile = null;
-        touchDragTile = null;
+  if (draggedTile && isDragging) {
+    if (touchDragTile) {
+      const touch = e.changedTouches[0];
+      const dropTarget = document.elementFromPoint(
+        touch.clientX,
+        touch.clientY,
+      );
+      const answerSlot = dropTarget ? dropTarget.closest(".answer-slot") : null;
+
+      if (answerSlot) {
+        // placeTileInAnswer now correctly handles making the original tile a ghost
+        placeTileInAnswer(draggedTile, answerSlot);
+      } else {
+        // If not dropped on a valid slot, restore the original tile's appearance
+        draggedTile.style.opacity = "1";
+      }
+
+      document.body.removeChild(touchDragTile);
     }
+  } else if (draggedTile) {
+    // This handles the case of a tap without a drag
+    draggedTile.style.opacity = "1";
+  }
+
+  // Reset all state variables
+  draggedTile = null;
+  touchDragTile = null;
+  isDragging = false;
 }
 
-// --- Common Functions ---
 function placeTileInAnswer(tile, answerSlot) {
-    // If the slot already has a tile, return it to the grid
-    const existingTile = answerSlot.querySelector('.letter-tile');
-    if(existingTile) {
-        const origin = document.getElementById(existingTile.dataset.originId);
-        if(origin) origin.classList.remove('is-ghost');
-        existingTile.remove();
+  const existingTile = answerSlot.querySelector(".letter-tile");
+  if (existingTile) {
+    const originTile = document.getElementById(existingTile.dataset.originId);
+    if (originTile) {
+      originTile.classList.remove("is-ghost");
+      // Ensure opacity is reset when a tile is returned to the grid
+      originTile.style.opacity = "1";
     }
-    
-    tile.classList.add("is-ghost");
-    const newTile = tile.cloneNode(true);
-    newTile.classList.remove("is-ghost", "letter-tile-bounce");
-    newTile.style.visibility = "visible";
-    newTile.style.opacity = '1';
-    newTile.dataset.originId = tile.id;
-    newTile.draggable = false; // The copy in the answer area shouldn't be draggable
-    answerSlot.appendChild(newTile);
-    checkAnswerLength();
+    existingTile.remove();
+  }
+
+  // The original tile in the grid becomes a permanent ghost for this turn
+  tile.classList.add("is-ghost");
+  // Let the .is-ghost class handle the opacity, remove inline style
+  tile.style.opacity = "";
+
+  const newTile = tile.cloneNode(true);
+  newTile.classList.remove(
+    "is-ghost",
+    "letter-tile-bounce",
+    "is-touch-dragging",
+  );
+  newTile.style.visibility = "visible";
+  newTile.style.opacity = "1";
+  newTile.dataset.originId = tile.id;
+  newTile.draggable = false;
+  answerSlot.appendChild(newTile);
+  checkAnswerLength();
 }
 
 function moveElement(x, y) {
-    if (!touchDragTile) return;
-    touchDragTile.style.left = `${x - touchDragTile.offsetWidth / 2}px`;
-    touchDragTile.style.top = `${y - touchDragTile.offsetHeight / 2}px`;
+  if (!touchDragTile) return;
+  // Center the tile on the touch point
+  touchDragTile.style.left = `${x - touchDragTile.offsetWidth / 2}px`;
+  touchDragTile.style.top = `${y - touchDragTile.offsetHeight / 2}px`;
 }

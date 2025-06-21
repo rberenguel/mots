@@ -26,7 +26,9 @@ export const ui = {
 
 export function createGridSlots(size) {
   for (let i = 0; i < size; i++)
-    ui.letterGrid.appendChild(document.createElement("div")).classList.add("grid-slot");
+    ui.letterGrid
+      .appendChild(document.createElement("div"))
+      .classList.add("grid-slot");
 }
 
 export function createAnswerSlots() {
@@ -34,7 +36,8 @@ export function createAnswerSlots() {
     const s = document.createElement("div");
     s.className = "answer-slot";
     s.dataset.index = i;
-    if (bonusSlots[i]) s.innerHTML = `<div class="bonus-text">+${bonusSlots[i]}</div>`;
+    if (bonusSlots[i])
+      s.innerHTML = `<div class="bonus-text">+${bonusSlots[i]}</div>`;
     ui.answerArea.appendChild(s);
   }
 }
@@ -50,7 +53,9 @@ export function createLetterTile(letterObj, nextId) {
     letterObj.letter === "*"
       ? `<i class="iconoir-star-solid text-2xl" style="color: var(--yellow)"></i>`
       : `<span>${letterObj.letter}</span><span class="letter-points">${letterObj.points}</span>`;
-  tile.addEventListener("animationend", () => tile.classList.remove("letter-tile-bounce"));
+  tile.addEventListener("animationend", () =>
+    tile.classList.remove("letter-tile-bounce"),
+  );
   return tile;
 }
 
@@ -61,47 +66,55 @@ export function updateRedrawBadge(count) {
 }
 
 export function updatePlaysDisplay(count) {
-    ui.playsDisplay.textContent = count;
-    ui.playsCounter.classList.toggle("is-low", count <= 3);
+  ui.playsDisplay.textContent = count;
+  ui.playsCounter.classList.toggle("is-low", count <= 3);
 }
 
 export function flashTiles(tiles, type) {
   tiles.forEach((t) => {
     t.classList.add(type === "green" ? "flash-green" : "flash-red");
-    t.addEventListener("animationend", () => t.classList.remove("flash-green", "flash-red"), { once: true });
+    t.addEventListener(
+      "animationend",
+      () => t.classList.remove("flash-green", "flash-red"),
+      { once: true },
+    );
   });
 }
 
 export function presentPowerupChoice(powerupList, onChoose) {
-    let options = [...powerupList].sort(() => 0.5 - Math.random()).slice(0, 2);
-    ui.powerupOptions.innerHTML = "";
-    options.forEach((opt) => {
-      const div = document.createElement("div");
-      div.className = "powerup-choice";
-      div.textContent = opt.text;
-      div.onclick = () => {
-        onChoose(opt);
-        ui.powerupModal.classList.remove("visible");
-      };
-      ui.powerupOptions.appendChild(div);
-    });
-    ui.powerupModal.classList.add("visible");
+  let options = [...powerupList].sort(() => 0.5 - Math.random()).slice(0, 2);
+  ui.powerupOptions.innerHTML = "";
+  options.forEach((opt) => {
+    const div = document.createElement("div");
+    div.className = "powerup-choice";
+    div.textContent = opt.text;
+    div.onclick = () => {
+      onChoose(opt);
+      ui.powerupModal.classList.remove("visible");
+    };
+    ui.powerupOptions.appendChild(div);
+  });
+  ui.powerupModal.classList.add("visible");
 }
 
 export function showGameOverModal(isWin, round, score) {
-    ui.gameOverModal.classList.add("visible");
-    ui.finalRound.textContent = round;
-    ui.finalScore.textContent = score;
-    if (isWin) ui.gameOverModal.querySelector("h2").textContent = "You Win!";
+  ui.gameOverModal.classList.add("visible");
+  ui.finalRound.textContent = round;
+  ui.finalScore.textContent = score;
+  if (isWin) ui.gameOverModal.querySelector("h2").textContent = "You Win!";
 }
 
 export function shuffleGridAnimation() {
   triggerHaptic();
-  const tilesInGrid = Array.from(ui.letterGrid.querySelectorAll(".letter-tile:not(.is-ghost)"));
+  const tilesInGrid = Array.from(
+    ui.letterGrid.querySelectorAll(".letter-tile:not(.is-ghost)"),
+  );
   if (tilesInGrid.length < 2) return;
 
   const startingPositions = new Map();
-  tilesInGrid.forEach((tile) => startingPositions.set(tile, tile.getBoundingClientRect()));
+  tilesInGrid.forEach((tile) =>
+    startingPositions.set(tile, tile.getBoundingClientRect()),
+  );
 
   const slotsWithTiles = tilesInGrid.map((t) => t.parentElement);
   for (let i = tilesInGrid.length - 1; i > 0; i--) {
@@ -129,6 +142,12 @@ export function shuffleGridAnimation() {
   });
 
   tilesInGrid.forEach((tile) => {
-    tile.addEventListener("transitionend", () => { tile.style.transition = ""; }, { once: true });
+    tile.addEventListener(
+      "transitionend",
+      () => {
+        tile.style.transition = "";
+      },
+      { once: true },
+    );
   });
 }

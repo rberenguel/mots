@@ -30,7 +30,7 @@ const detectiOS = () => {
  * Call this function once when your application loads.
  */
 export function initHaptic() {
-  if (hapticLabel || typeof document === 'undefined') return;
+  if (hapticLabel || typeof document === "undefined") return;
 
   const input = document.createElement("input");
   input.type = "checkbox";
