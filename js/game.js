@@ -24,6 +24,8 @@ let playerPowerups = {
   autoRefill: false,
 };
 
+let blockedAnswerSlots = [];
+
 export function getGameStats() {
   return { activePowerups, longestWord, highestScore };
 }
@@ -66,6 +68,21 @@ export function startGame() {
 }
 
 function calculateAndDisplayBagStats() {
+  let totalBag = 0;
+  for (const letter in cfg.letterDistribution) {
+    for (let i = 0; i < cfg.letterDistribution[letter].c; i++) {
+      totalBag++;
+    }
+  }
+  const totals = {
+    total: totalBag,
+    black:
+      playerPowerups.blackTileModifier +
+      cfg.BLACK_TILES_PER_ROUND(currentRound),
+    wildcard: playerPowerups.wildcards || 0,
+    boosted: playerPowerups.boosted || 0,
+    nerfed: playerPowerups.nerfed || 0,
+  };
   const stats = {
     total: letterBag.length,
     black: letterBag.filter((t) => t.isBlackTile).length,
@@ -73,7 +90,7 @@ function calculateAndDisplayBagStats() {
     boosted: letterBag.filter((t) => t.isBoosted && !t.isNerfed).length,
     nerfed: letterBag.filter((t) => t.isNerfed).length,
   };
-  ui.updateBagStatsDisplay(stats);
+  ui.updateBagStatsDisplay(totals, stats);
 }
 
 function startNewRound() {
@@ -90,6 +107,24 @@ function startNewRound() {
     letterBag.push(...specialTiles);
   }
 
+  blockedAnswerSlots = [];
+  const blockedConfig = cfg.BLOCKED_SLOTS_PER_ROUND[currentRound];
+  if (blockedConfig) {
+    const numBlockedSlots =
+      Math.floor(Math.random() * (blockedConfig.max - blockedConfig.min + 1)) +
+      blockedConfig.min;
+    const allSlotIndices = Array.from(
+      { length: cfg.ANSWER_SLOTS },
+      (_, i) => i,
+    );
+
+    for (let i = 0; i < numBlockedSlots; i++) {
+      blockedAnswerSlots.push(allSlotIndices.length - i);
+    }
+  }
+  // This needs to be called after `blockedAnswerSlots` is populated
+  ui.updateBlockedSlotsDisplay(blockedAnswerSlots);
+
   targetScore =
     20 + (currentRound <= 6 ? currentRound * 10 : 60 + (currentRound - 6) * 20);
   ui.ui.roundDisplay.textContent = `${currentRound}/${cfg.TOTAL_ROUNDS}`;
@@ -99,6 +134,7 @@ function startNewRound() {
   ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier); // Add this line
 
   checkAnswerLength();
+  calculateAndDisplayBagStats();
 
   if (currentRound > 1 && currentRound <= cfg.TOTAL_ROUNDS) {
     choosePowerup();
@@ -114,7 +150,7 @@ function resetBoardForNewRound() {
   const currentBlackTiles = letterBag.filter((t) => t.isBlackTile).length;
   console.log(currentBlackTiles);
   // Get the target number of black tiles for the current round from the config.
-  const targetBlackTiles = cfg.BLACK_TILES_PER_ROUND[currentRound] || 0;
+  const targetBlackTiles = cfg.BLACK_TILES_PER_ROUND(currentRound);
   // Only add the difference to reach the target.
   const blackTilesToAdd = Math.max(0, targetBlackTiles - currentBlackTiles);
 
@@ -168,8 +204,7 @@ function createLetterBag() {
   });
 
   let blackTileCount =
-    (cfg.BLACK_TILES_PER_ROUND[currentRound] || 0) +
-    playerPowerups.blackTileModifier;
+    cfg.BLACK_TILES_PER_ROUND(currentRound) + playerPowerups.blackTileModifier;
   if (blackTileCount < 0) blackTileCount = 0;
 
   for (let i = 0; i < blackTileCount; i++) {
@@ -283,6 +318,27 @@ export function handleSubmitWord() {
       });
       refillGrid(placedTiles.length);
 
+      if (currentRound >= 0) {
+        const blockedConfig = cfg.BLOCKED_SLOTS_PER_ROUND[currentRound];
+        if (blockedConfig) {
+          const numBlockedSlots =
+            Math.floor(
+              Math.random() * (blockedConfig.max - blockedConfig.min + 1),
+            ) + blockedConfig.min;
+          const allSlotIndices = Array.from(
+            { length: cfg.ANSWER_SLOTS },
+            (_, i) => i,
+          );
+
+          blockedAnswerSlots = []; // Clear previous
+          // Randomly select indices to block
+          for (let i = 0; i < numBlockedSlots; i++) {
+            blockedAnswerSlots.push(allSlotIndices.length - i);
+          }
+        }
+      }
+      ui.updateBlockedSlotsDisplay(blockedAnswerSlots); // Update UI
+
       const roundComplete = roundScore >= targetScore;
       if (roundComplete && currentRound < cfg.TOTAL_ROUNDS) {
         startNewRound();
@@ -303,7 +359,13 @@ export function handleSubmitWord() {
 }
 
 export function checkAnswerLength() {
-  const wordLength = ui.ui.answerArea.querySelectorAll(".letter-tile").length;
+  // Only count tiles in unblocked slots
+  const wordLength = Array.from(
+    ui.ui.answerArea.querySelectorAll(".answer-slot"),
+  ).filter(
+    (s) =>
+      !s.classList.contains("is-blocked") && s.querySelector(".letter-tile"),
+  ).length;
   ui.ui.submitWordButton.disabled = wordLength < cfg.MIN_WORD_LENGTH;
 }
 
@@ -343,8 +405,7 @@ function choosePowerup() {
   ];
 
   const upcomingBlackTiles =
-    (cfg.BLACK_TILES_PER_ROUND[currentRound] || 0) +
-    playerPowerups.blackTileModifier;
+    cfg.BLACK_TILES_PER_ROUND(currentRound) + playerPowerups.blackTileModifier;
   if (upcomingBlackTiles > 0) {
     powerupList.push({
       id: "remove_black_tile",

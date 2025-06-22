@@ -113,6 +113,28 @@ body {
   font-size: 18px;
 }
 
+.answer-slot.is-blocked {
+  background-color: var(--base02); /* Darker background for blocked slots */
+  border: 2px dashed var(--base01); /* Subtle dashed border */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Ensure icon doesn't overflow */
+}
+
+.blocked-x {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.2rem; /* Larger size for the icon */
+  color: var(--red); /* Red color for the X */
+  opacity: 0.7; /* Slightly transparent */
+  z-index: 5; /* Ensure it's above bonus text if present */
+  pointer-events: none; /* Make sure it doesn't interfere with clicks */
+  cursor: not-allowed;
+}
+
 .multiplier-text {
   position: absolute;
   top: 2px;
@@ -240,6 +262,9 @@ body {
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: 600;
+}
+#round-display {
+  display: none;
 }
 .top-bar-section {
   text-align: center;

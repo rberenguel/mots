@@ -37,12 +37,12 @@ export const ui = {
   menuHighestScoreWord: document.getElementById("menu-highest-score-word"),
 };
 
-export function updateBagStatsDisplay(stats) {
-  ui.bagTotalDisplay.textContent = stats.total;
-  ui.bagBlackDisplay.textContent = stats.black;
-  ui.bagWildcardDisplay.textContent = stats.wildcard;
-  ui.bagBoostedDisplay.textContent = stats.boosted;
-  ui.bagNerfedDisplay.textContent = stats.nerfed;
+export function updateBagStatsDisplay(totals, stats) {
+  ui.bagTotalDisplay.textContent = stats.total + "/" + totals.total;
+  ui.bagBlackDisplay.textContent = stats.black + "/" + totals.black;
+  ui.bagWildcardDisplay.textContent = stats.wildcard + "/" + totals.wildcard;
+  ui.bagBoostedDisplay.textContent = stats.boosted + "/" + totals.boosted;
+  ui.bagNerfedDisplay.textContent = stats.nerfed + "/" + totals.nerfed;
 }
 
 export function createGridSlots(size) {
@@ -238,4 +238,20 @@ export function showMenuModal() {
     : "-";
 
   ui.menuModal.classList.add("visible");
+}
+
+export function updateBlockedSlotsDisplay(blockedIndices) {
+  Array.from(ui.answerArea.children).forEach((slot, index) => {
+    slot.classList.remove("is-blocked"); // Remove previous blocked state
+    slot.innerHTML = ""; // Clear any existing bonus text or tiles for re-rendering
+    if (bonusSlots[index]) {
+      // Re-add bonus text if it was there
+      slot.innerHTML = `<div class="bonus-text">+${bonusSlots[index]}</div>`;
+    }
+
+    if (blockedIndices.includes(index)) {
+      slot.classList.add("is-blocked");
+      slot.innerHTML = '<div class="blocked-x iconoir-xmark"></div>';
+    }
+  });
 }

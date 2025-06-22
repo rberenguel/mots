@@ -105,9 +105,12 @@ function handleBackspace() {
  */
 function handleLetterPress(letter) {
   const answerSlots = Array.from(ui.answerArea.children);
+  // Only find target slots that are not blocked
   const targetSlot = answerSlots.find(
     (s) =>
-      !s.querySelector(".letter-tile") && !s.classList.contains("pending-tile"),
+      !s.querySelector(".letter-tile") &&
+      !s.classList.contains("pending-tile") &&
+      !s.classList.contains("is-blocked"), // New condition
   );
 
   const sourceTile = findAvailableTile(letter);
@@ -125,7 +128,7 @@ function handleLetterPress(letter) {
     return;
   }
 
-  if (!targetSlot) return;
+  if (!targetSlot) return; // No available non-blocked slot
 
   triggerHaptic();
   targetSlot.classList.add("pending-tile");
@@ -183,7 +186,7 @@ function animateTileMovement(sourceTile, targetSlot, callback) {
 
   document.body.appendChild(animatedTile);
   pendingAnimations.set(targetSlot, animatedTile);
-
+  animatedTile.offsetHeight;
   requestAnimationFrame(() => {
     animatedTile.style.transform = `translate(${targetRect.left - sourceRect.left}px, ${targetRect.top - sourceRect.top}px)`;
   });
@@ -222,7 +225,7 @@ function animateTileReturn(sourceTile, targetTile, callback) {
 
   sourceTile.remove();
   document.body.appendChild(animatedTile);
-
+  animatedTile.offsetHeight; // Also requires a reflow!
   requestAnimationFrame(() => {
     animatedTile.style.transform = `translate(${targetRect.left - sourceRect.left}px, ${targetRect.top - sourceRect.top}px)`;
   });

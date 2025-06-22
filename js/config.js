@@ -27,21 +27,43 @@ export const letterDistribution = {
   Z: { c: 1, p: 10 },
 };
 
-export const BLACK_TILES_PER_ROUND = {
-  1: 2,
-  2: 2,
-  3: 3,
-  4: 3,
-  5: 5,
-  6: 5,
-  7: 8,
-  8: 8,
-  9: 13,
-  10: 13,
+export const BLACK_TILES_PER_ROUND = (round) => {
+  const tiles = {
+    1: 2,
+    2: 2,
+    3: 3,
+    4: 3,
+    5: 5,
+    6: 5,
+    7: 8,
+    8: 8,
+    9: 13,
+    10: 13,
+  };
+  if (round < 1) {
+    return 0;
+  }
+  if (round > 10) {
+    return tiles[10];
+  }
+  return tiles[round];
+};
+
+export const BLOCKED_SLOTS_PER_ROUND = {
+  1: { min: 0, max: 4 },
+  2: { min: 0, max: 4 },
+  3: { min: 0, max: 4 },
+  4: { min: 0, max: 4 },
+  5: { min: 0, max: 4 },
+  6: { min: 0, max: 5 },
+  7: { min: 0, max: 5 },
+  8: { min: 0, max: 5 },
+  9: { min: 0, max: 6 },
+  10: { min: 0, max: 6 },
 };
 
 export const GRID_SIZE = 16;
 export const ANSWER_SLOTS = 10;
-export const TOTAL_ROUNDS = 10;
+export const TOTAL_ROUNDS = Infinity;
 export const MIN_WORD_LENGTH = 4;
 export const bonusSlots = { 4: 5, 5: 5, 6: 5, 7: 5, 8: 10, 9: 20 };

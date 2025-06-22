@@ -79,6 +79,7 @@ function addTileInteractionListeners() {
 }
 
 function handleGridClick(e) {
+  console.info("clicked");
   const clickedTile = e.target.closest(".letter-tile");
   if (!clickedTile || clickedTile.classList.contains("black-tile")) return;
   triggerHaptic();
@@ -95,7 +96,8 @@ function handleGridClick(e) {
     }
   } else {
     const emptySlot = Array.from(ui.answerArea.children).find(
-      (s) => !s.querySelector(".letter-tile"),
+      (s) =>
+        !s.querySelector(".letter-tile") && !s.classList.contains("is-blocked"),
     );
 
     if (emptySlot) {
@@ -139,7 +141,7 @@ function handleDrop(e) {
   e.preventDefault();
   if (!draggedTile) return;
   const answerSlot = e.target.closest(".answer-slot");
-  if (answerSlot) {
+  if (answerSlot && !answerSlot.classList.contains("is-blocked")) {
     placeTileInAnswer(draggedTile, answerSlot);
   }
 }
@@ -205,6 +207,7 @@ function handleTouchMove(e) {
 
 function handleTouchEnd(e) {
   if (draggedTile && isDragging) {
+    triggerHaptic();
     if (touchDragTile) {
       const touch = e.changedTouches[0];
       const dropTarget = document.elementFromPoint(
@@ -213,7 +216,7 @@ function handleTouchEnd(e) {
       );
       const answerSlot = dropTarget ? dropTarget.closest(".answer-slot") : null;
 
-      if (answerSlot) {
+      if (answerSlot && !answerSlot.classList.contains("is-blocked")) {
         // placeTileInAnswer now correctly handles making the original tile a ghost
         placeTileInAnswer(draggedTile, answerSlot);
       } else {
@@ -235,6 +238,10 @@ function handleTouchEnd(e) {
 }
 
 function placeTileInAnswer(tile, answerSlot) {
+  if (answerSlot.classList.contains("is-blocked")) {
+    console.warn("Attempted to place tile in a blocked answer slot.");
+    return;
+  }
   const existingTile = answerSlot.querySelector(".letter-tile");
   if (existingTile) {
     const originTile = document.getElementById(existingTile.dataset.originId);
