@@ -58,7 +58,7 @@ export function startGame() {
     pointBoosts: [],
     pointNerfs: [],
     blackTileModifier: 0,
-    positionalMultiplier: { position: 3, multiplier: 3 },
+    positionalMultiplier: null,
   };
   ui.ui.gameOverModal.classList.remove("visible");
   ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
