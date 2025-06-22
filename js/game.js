@@ -44,7 +44,6 @@ export async function initializeGame() {
 }
 
 export function startGame() {
-  triggerHaptic();
   totalScore = 0;
   currentRound = 0;
   totalPlays = 10;
@@ -144,11 +143,8 @@ function startNewRound() {
 }
 
 function resetBoardForNewRound() {
-  console.log("Resetting board");
   // Calculate how many black tiles are already in the bag.
-  console.log(letterBag);
   const currentBlackTiles = letterBag.filter((t) => t.isBlackTile).length;
-  console.log(currentBlackTiles);
   // Get the target number of black tiles for the current round from the config.
   const targetBlackTiles = cfg.BLACK_TILES_PER_ROUND(currentRound);
   // Only add the difference to reach the target.
@@ -238,7 +234,6 @@ function refillGrid(count) {
 
 export function handleRedraw() {
   if (redrawsLeft <= 0) return;
-  triggerHaptic();
   redrawsLeft--;
 
   // Return letters from the answer area to the bag
@@ -370,7 +365,6 @@ export function checkAnswerLength() {
 }
 
 function isWordValid(word) {
-  console.log(`Checking ${word}`);
   if (!word.includes("*")) return wordList.has(word.toLowerCase());
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
   for (let char of alphabet) {

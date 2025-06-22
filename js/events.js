@@ -14,9 +14,18 @@ let isDragging = false;
 const DRAG_THRESHOLD = 5; // Minimum distance in pixels to trigger a drag
 
 export function addEventListeners() {
-  ui.restartButton.addEventListener("click", startGame);
-  ui.shuffleButton.addEventListener("click", shuffleGridAnimation);
-  ui.redrawButton.addEventListener("click", handleRedraw);
+  ui.restartButton.addEventListener("click", () => {
+    triggerHaptic();
+    startGame();
+  });
+  ui.shuffleButton.addEventListener("click", () => {
+    triggerHaptic();
+    shuffleGridAnimation();
+  });
+  ui.redrawButton.addEventListener("click", () => {
+    triggerHaptic();
+    handleRedraw();
+  });
   ui.submitWordButton.addEventListener("click", handleSubmitWord);
   addHelpModalListeners();
   addMenuModalListeners();
@@ -79,7 +88,6 @@ function addTileInteractionListeners() {
 }
 
 function handleGridClick(e) {
-  console.info("clicked");
   const clickedTile = e.target.closest(".letter-tile");
   if (!clickedTile || clickedTile.classList.contains("black-tile")) return;
   triggerHaptic();

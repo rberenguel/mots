@@ -67,3 +67,7 @@ export const ANSWER_SLOTS = 10;
 export const TOTAL_ROUNDS = Infinity;
 export const MIN_WORD_LENGTH = 4;
 export const bonusSlots = { 4: 5, 5: 5, 6: 5, 7: 5, 8: 10, 9: 20 };
+
+export let props = {
+  version: null,
+};

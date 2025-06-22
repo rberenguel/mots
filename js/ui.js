@@ -1,6 +1,5 @@
 import { ANSWER_SLOTS, bonusSlots } from "./config.js";
 import { getGameStats } from "./game.js";
-import { triggerHaptic } from "./haptic.js";
 
 export const ui = {
   letterGrid: document.getElementById("letter-grid"),
@@ -166,7 +165,6 @@ export function showGameOverModal(isWin, round, score) {
 }
 
 export function shuffleGridAnimation() {
-  triggerHaptic();
   const tilesInGrid = Array.from(
     ui.letterGrid.querySelectorAll(".letter-tile:not(.is-ghost)"),
   );

@@ -1,6 +1,5 @@
 import { ui, shuffleGridAnimation } from "./ui.js";
 import { checkAnswerLength, handleSubmitWord, handleRedraw } from "./game.js";
-import { triggerHaptic } from "./haptic.js";
 
 const pendingAnimations = new Map();
 
@@ -66,7 +65,6 @@ function handleBackspace() {
 
   if (lastTileIndex === -1) return;
 
-  triggerHaptic();
   const slotToRemoveFrom = answerSlots[lastTileIndex];
   const tileInSlot = slotToRemoveFrom.querySelector(".letter-tile");
 
@@ -117,7 +115,6 @@ function handleLetterPress(letter) {
 
   if (!sourceTile) {
     if (!ui.letterGrid.classList.contains("shake-grid")) {
-      triggerHaptic();
       ui.letterGrid.classList.add("shake-grid");
       ui.letterGrid.addEventListener(
         "animationend",
@@ -130,7 +127,6 @@ function handleLetterPress(letter) {
 
   if (!targetSlot) return; // No available non-blocked slot
 
-  triggerHaptic();
   targetSlot.classList.add("pending-tile");
   sourceTile.classList.add("is-ghost");
 
