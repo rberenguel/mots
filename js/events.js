@@ -56,35 +56,21 @@ function addTileInteractionListeners() {
 }
 
 function handleGridClick(e) {
-  triggerHaptic();
   const clickedTile = e.target.closest(".letter-tile");
-  if (!clickedTile) return;
-
-  // Case 1: The user clicked a ghost tile in the letter grid.
-  // The goal is to bring the corresponding tile back from the answer area.
+  if (!clickedTile || clickedTile.classList.contains("black-tile")) return;
+  triggerHaptic();
   if (clickedTile.classList.contains("is-ghost")) {
     const originId = clickedTile.id;
-
-    // Find the tile in the answer area that came from this grid slot.
     const tileInAnswer = ui.answerArea.querySelector(
       `[data-origin-id="${originId}"]`,
     );
 
     if (tileInAnswer) {
-      // Remove the tile from the answer area.
       tileInAnswer.remove();
-
-      // "Un-ghost" the original tile in the letter grid, making it active again.
       clickedTile.classList.remove("is-ghost");
-
-      // Update the state of the submit button.
       checkAnswerLength();
     }
-  }
-  // Case 2: The user clicked a normal, active tile.
-  // This preserves the logic from our last fix.
-  else {
-    // Find the first available slot in the answer area.
+  } else {
     const emptySlot = Array.from(ui.answerArea.children).find(
       (s) => !s.querySelector(".letter-tile"),
     );
@@ -137,11 +123,15 @@ function handleDrop(e) {
 
 function handleTouchStart(e) {
   const tile = e.target.closest(".letter-tile:not(.is-ghost)");
-  if (tile && ui.letterGrid.contains(tile)) {
+  if (
+    tile &&
+    !tile.classList.contains("black-tile") &&
+    ui.letterGrid.contains(tile)
+  ) {
     draggedTile = tile;
     const touch = e.touches[0];
     touchStartPos = { x: touch.clientX, y: touch.clientY };
-    isDragging = false; // Reset dragging state
+    isDragging = false;
   }
 }
 

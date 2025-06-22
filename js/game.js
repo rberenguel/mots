@@ -18,6 +18,7 @@ let playerPowerups = {
   pointNerfs: [],
   blackTileModifier: 0,
   positionalMultiplier: null,
+  autoRefill: false,
 };
 
 export async function initializeGame() {
@@ -48,6 +49,7 @@ export function startGame() {
   };
   ui.ui.gameOverModal.classList.remove("visible");
   ui.updateMultiplierDisplay(null); // Clear any multiplier display
+  createLetterBag();
   startNewRound();
 }
 
@@ -68,6 +70,14 @@ function startNewRound() {
   if (currentRound > 1) totalPlays += 4;
   updatePlays(0);
 
+  if (playerPowerups.autoRefill && currentRound > 1) {
+    const specialTiles = letterBag.filter(
+      (t) => t.isBlackTile || t.letter === "*" || t.isBoosted || t.isNerfed,
+    );
+    createLetterBag(); // Resets to standard letters
+    letterBag.push(...specialTiles);
+  }
+
   targetScore =
     20 + (currentRound <= 6 ? currentRound * 10 : 60 + (currentRound - 6) * 20);
   ui.ui.roundDisplay.textContent = `${currentRound}/${cfg.TOTAL_ROUNDS}`;
@@ -86,7 +96,21 @@ function startNewRound() {
 }
 
 function resetBoardForNewRound() {
-  createLetterBag();
+  console.log("Resetting board");
+  // Calculate how many black tiles are already in the bag.
+  console.log(letterBag);
+  const currentBlackTiles = letterBag.filter((t) => t.isBlackTile).length;
+  console.log(currentBlackTiles);
+  // Get the target number of black tiles for the current round from the config.
+  const targetBlackTiles = cfg.BLACK_TILES_PER_ROUND[currentRound] || 0;
+  // Only add the difference to reach the target.
+  const blackTilesToAdd = Math.max(0, targetBlackTiles - currentBlackTiles);
+
+  for (let i = 0; i < blackTilesToAdd; i++) {
+    letterBag.push({ letter: "BLACK", points: 0, isBlackTile: true });
+  }
+
+  // Clear the board and refill from the bag.
   document.querySelectorAll(".letter-tile").forEach((t) => t.remove());
   document.querySelectorAll(".grid-slot").forEach((s) => (s.innerHTML = ""));
   refillGrid();
@@ -170,13 +194,24 @@ export function handleRedraw() {
   triggerHaptic();
   redrawsLeft--;
 
-  // Remove all tiles from the letter grid. These tiles are
-  // discarded and not returned to the letter bag.
+  // Return letters from the answer area to the bag
+  document.querySelectorAll("#answer-area .letter-tile").forEach((tile) => {
+    const pointsSpan = tile.querySelector(".letter-points");
+    letterBag.push({
+      letter: tile.dataset.letter,
+      points: parseInt(tile.dataset.points, 10),
+      isBoosted: pointsSpan ? pointsSpan.classList.contains("boosted") : false,
+      isNerfed: pointsSpan ? pointsSpan.classList.contains("nerfed") : false,
+    });
+    tile.remove();
+  });
+
+  // Discard letters remaining on the grid
   document
     .querySelectorAll("#letter-grid .letter-tile")
     .forEach((t) => t.remove());
 
-  // Refill the grid with completely new tiles from the bag.
+  // Refill the grid with new tiles from the bag
   refillGrid();
   checkAnswerLength();
 }
@@ -314,6 +349,20 @@ function choosePowerup() {
       updatePlays(1);
     },
   });
+  if (!playerPowerups.autoRefill) {
+    powerupList.push({
+      id: "auto_refill_bag",
+      text: "Automatically refill bag after each round",
+      apply: () => {
+        playerPowerups.autoRefill = true;
+        const specialTiles = letterBag.filter(
+          (t) => t.isBlackTile || t.letter === "*" || t.isBoosted || t.isNerfed,
+        );
+        createLetterBag();
+        letterBag.push(...specialTiles);
+      },
+    });
+  }
   if (!playerPowerups.positionalMultiplier) {
     powerupList.push({
       id: "positional_multiplier",
