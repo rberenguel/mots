@@ -1,4 +1,5 @@
 import { ANSWER_SLOTS, bonusSlots } from "./config.js";
+import { getGameStats } from "./game.js";
 import { triggerHaptic } from "./haptic.js";
 
 export const ui = {
@@ -27,6 +28,13 @@ export const ui = {
   bagWildcardDisplay: document.getElementById("bag-wildcard-display"),
   bagBoostedDisplay: document.getElementById("bag-boosted-display"),
   bagNerfedDisplay: document.getElementById("bag-nerfed-display"),
+  menuButton: document.getElementById("menu-button"),
+  menuModal: document.getElementById("menu-modal"),
+  menuCloseButton: document.getElementById("menu-close-button"),
+  menuRestartButton: document.getElementById("menu-restart-button"),
+  menuPowerupsList: document.getElementById("menu-powerups-list"),
+  menuLongestWord: document.getElementById("menu-longest-word"),
+  menuHighestScoreWord: document.getElementById("menu-highest-score-word"),
 };
 
 export function updateBagStatsDisplay(stats) {
@@ -203,4 +211,31 @@ export function shuffleGridAnimation() {
       { once: true },
     );
   });
+}
+
+export function showMenuModal() {
+  const stats = getGameStats();
+
+  // Populate powerups
+  ui.menuPowerupsList.innerHTML = ""; // Clear existing
+  if (stats.activePowerups.length > 0) {
+    stats.activePowerups.forEach((powerup) => {
+      const li = document.createElement("li");
+      li.textContent = powerup.shorttext; // Use the new shorttext property
+      ui.menuPowerupsList.appendChild(li);
+    });
+  } else {
+    const li = document.createElement("li");
+    li.textContent = "None yet!";
+    li.style.opacity = "0.7";
+    ui.menuPowerupsList.appendChild(li);
+  }
+
+  // Populate best words stats
+  ui.menuLongestWord.textContent = stats.longestWord.word || "-";
+  ui.menuHighestScoreWord.textContent = stats.highestScore.word
+    ? `${stats.highestScore.word} (${stats.highestScore.score} pts)`
+    : "-";
+
+  ui.menuModal.classList.add("visible");
 }

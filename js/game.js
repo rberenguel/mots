@@ -2,6 +2,9 @@ import * as cfg from "./config.js";
 import * as ui from "./ui.js";
 import { triggerHaptic } from "./haptic.js";
 
+let activePowerups = [];
+let longestWord = { word: "", length: 0 };
+let highestScore = { word: "", score: 0 };
 let letterBag = [],
   wordList = new Set();
 let totalScore = 0,
@@ -20,6 +23,10 @@ let playerPowerups = {
   positionalMultiplier: null,
   autoRefill: false,
 };
+
+export function getGameStats() {
+  return { activePowerups, longestWord, highestScore };
+}
 
 export async function initializeGame() {
   try {
@@ -40,6 +47,11 @@ export function startGame() {
   currentRound = 0;
   totalPlays = 10;
   redrawsLeft = 2;
+  // Reset stats for new game
+  activePowerups = [];
+  longestWord = { word: "", length: 0 };
+  highestScore = { word: "", score: 0 };
+
   playerPowerups = {
     wildcards: 0,
     pointBoosts: [],
@@ -48,7 +60,7 @@ export function startGame() {
     positionalMultiplier: null,
   };
   ui.ui.gameOverModal.classList.remove("visible");
-  ui.updateMultiplierDisplay(null); // Clear any multiplier display
+  ui.updateMultiplierDisplay(null);
   createLetterBag();
   startNewRound();
 }
@@ -255,6 +267,14 @@ export function handleSubmitWord() {
     ui.ui.roundScoreDisplay.textContent = roundScore;
     ui.flashTiles(placedTiles, "green");
 
+    // Update game stats
+    if (word.length > longestWord.length) {
+      longestWord = { word, length: word.length };
+    }
+    if (wordScore > highestScore.score) {
+      highestScore = { word, score: wordScore };
+    }
+
     setTimeout(() => {
       placedTiles.forEach((t) => {
         const o = document.getElementById(t.dataset.originId);
@@ -297,12 +317,12 @@ function isWordValid(word) {
   return false;
 }
 
-// Replace the existing choosePowerup function
 function choosePowerup() {
   const powerupList = [
     {
       id: "redraw",
       text: "Gain 2 Redraws",
+      shorttext: "+2 Redraws",
       apply: () => {
         redrawsLeft += 2;
         ui.updateRedrawBadge(redrawsLeft);
@@ -311,11 +331,13 @@ function choosePowerup() {
     {
       id: "wildcard",
       text: "Add a Wildcard (*) to the bag",
+      shorttext: "+1 Wildcard",
       apply: () => playerPowerups.wildcards++,
     },
     {
       id: "pointboost",
       text: "+1 to a random letter tile",
+      shorttext: "Letter Point Boost",
       apply: () => playerPowerups.pointBoosts.push(1),
     },
   ];
@@ -327,6 +349,7 @@ function choosePowerup() {
     powerupList.push({
       id: "remove_black_tile",
       text: "Remove a black tile from the bag (permanent)",
+      shorttext: "Remove Black Tile",
       apply: () => {
         playerPowerups.blackTileModifier--;
       },
@@ -336,6 +359,7 @@ function choosePowerup() {
   powerupList.push({
     id: "add_black_tile",
     text: "Add a black tile to the bag for +2 plays",
+    shorttext: "+2 Plays (adds black tile)",
     apply: () => {
       playerPowerups.blackTileModifier++;
       updatePlays(2);
@@ -344,6 +368,7 @@ function choosePowerup() {
   powerupList.push({
     id: "point_nerf",
     text: "-1 to a random letter tile for +1 play",
+    shorttext: "+1 Play (letter point nerf)",
     apply: () => {
       playerPowerups.pointNerfs.push(1);
       updatePlays(1);
@@ -353,6 +378,7 @@ function choosePowerup() {
     powerupList.push({
       id: "auto_refill_bag",
       text: "Automatically refill bag after each round",
+      shorttext: "Auto-Refill Bag",
       apply: () => {
         playerPowerups.autoRefill = true;
         const specialTiles = letterBag.filter(
@@ -367,6 +393,7 @@ function choosePowerup() {
     powerupList.push({
       id: "positional_multiplier",
       text: "3x score on a random letter position (1-5)",
+      shorttext: "3x Positional Score",
       apply: () => {
         const N = Math.floor(Math.random() * 5) + 1;
         playerPowerups.positionalMultiplier = { position: N, multiplier: 3 };
@@ -377,6 +404,7 @@ function choosePowerup() {
 
   ui.presentPowerupChoice(powerupList, (chosenOption) => {
     chosenOption.apply();
+    activePowerups.push(chosenOption);
     resetBoardForNewRound();
   });
 }

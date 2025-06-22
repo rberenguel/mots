@@ -71,9 +71,42 @@
         <button id="submit-word-button" title="Submit Word" class="icon-btn">
           <i class="iconoir-upload"></i>
         </button>
+        <button id="menu-button" title="Menu" class="icon-btn">
+          <i class="iconoir-menu"></i>
+        </button>
         <button id="help-button" title="Help" class="icon-btn">
           <i class="iconoir-question-mark"></i>
         </button>
+      </div>
+
+      <div id="menu-modal" class="modal-overlay">
+        <div class="modal-content">
+          <button id="menu-close-button" class="modal-close-btn" title="Close">
+            <i class="iconoir-xmark"></i>
+          </button>
+
+          <h2><img id="menu-icon" src="icon192.png" />Mots</h2>
+          <div id="menu-content">
+            <div class="menu-section">
+              <h3>Active Power-ups</h3>
+              <ul id="menu-powerups-list"></ul>
+            </div>
+            <div class="menu-section">
+              <h3>Game Stats</h3>
+              <p>
+                <strong>Longest Word:</strong>
+                <span id="menu-longest-word">-</span>
+              </p>
+              <p>
+                <strong>Best Word:</strong>
+                <span id="menu-highest-score-word">-</span>
+              </p>
+            </div>
+          </div>
+          <div class="menu-buttons">
+            <button id="menu-restart-button">Restart</button>
+          </div>
+        </div>
       </div>
 
       <div id="answer-container">
@@ -104,6 +137,27 @@
         <h2>How to Play</h2>
         <div class="help-text">
           <p>
+            Got inspired by
+            <a href="https://en.wikipedia.org/wiki/Boggle">Boggle</a>,
+            <a href="https://gamemakerstoolkit.com/">Mark Brown's</a> fantastic
+            game,
+            <a href="https://store.steampowered.com/app/3586660/Word_Play/"
+              >Word Play</a
+            >, threw together a mash-up with Scrabble's point system, and common
+            English letter frequencies.
+          </p>
+        </div>
+        <div class="help-text">
+          <p>
+            <em>Mots</em> is designed to be a quick game you can pick up, play
+            for 5 minutes, and put down—ideal for short daily pauses. Or for
+            binging, but I tried to keep it a light game where you don't need to
+            plan much ahead. Ideal for pauses that should happen daily.
+            <em>Eat more fiber.</em>
+          </p>
+        </div>
+        <div class="help-text">
+          <p>
             • The game has 10 rounds. Each round requires more points to pass.
           </p>
           <p>
@@ -114,27 +168,51 @@
             • You start with 10 plays. You gain 4 extra plays after each round
             and also with some powerups.
           </p>
-          <p>• Words must be at least 4 letters long.</p>
+          <p>• Words must be at least 4 letters long, English.</p>
           <p>• After each round, choose one of two power-ups. Choose wisely!</p>
           <hr />
           <p class="help-icon-row">
             <span class="icon-btn"
               ><i class="iconoir-shuffle" style="color: var(--orange)"></i
             ></span>
-            Shuffles the current letters to help you find words.
+            <span>
+              Shuffles the current letters to help you find words.
+              <br />
+              <small>Shortcut: <kbd>Tab</kbd></small>
+            </span>
           </p>
           <p class="help-icon-row">
             <span class="icon-btn"
               ><i class="iconoir-refresh" style="color: var(--cyan)"></i
             ></span>
-            Redraws your hand from the bag. Uses are limited!
+            <span>
+              Redraws your hand from the bag. Uses are limited!
+              <br />
+              <small
+                >Shortcut: <kbd>Ctrl</kbd> or <kbd>Cmd</kbd> +
+                <kbd>R</kbd></small
+              >
+            </span>
           </p>
           <p class="help-icon-row">
             <span class="icon-btn"
               ><i class="iconoir-upload" style="color: var(--green)"></i
             ></span>
-            Submits your word for scoring.
+            <span>
+              Submits your word for scoring.
+              <br />
+              <small>Shortcut: <kbd>Enter</kbd></small>
+            </span>
           </p>
+          <hr />
+          <div class="help-key-row" style="margin-top: 1rem">
+            <kbd>A</kbd>-<kbd>Z</kbd>
+            <span>Type a letter to place it in the answer area.</span>
+          </div>
+          <div class="help-key-row">
+            <kbd>Backspace</kbd>
+            <span>Remove the last letter.</span>
+          </div>
         </div>
         <button id="close-help-button">Got it!</button>
       </div>

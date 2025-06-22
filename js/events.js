@@ -1,4 +1,4 @@
-import { ui, shuffleGridAnimation } from "./ui.js";
+import { ui, shuffleGridAnimation, showMenuModal } from "./ui.js";
 import {
   startGame,
   handleRedraw,
@@ -19,6 +19,7 @@ export function addEventListeners() {
   ui.redrawButton.addEventListener("click", handleRedraw);
   ui.submitWordButton.addEventListener("click", handleSubmitWord);
   addHelpModalListeners();
+  addMenuModalListeners();
   addTileInteractionListeners();
 }
 
@@ -35,6 +36,28 @@ function addHelpModalListeners() {
       triggerHaptic();
       ui.helpModal.classList.remove("visible");
     }
+  });
+}
+
+function addMenuModalListeners() {
+  ui.menuButton.addEventListener("click", () => {
+    triggerHaptic();
+    showMenuModal();
+  });
+  ui.menuCloseButton.addEventListener("click", () => {
+    triggerHaptic();
+    ui.menuModal.classList.remove("visible");
+  });
+  ui.menuModal.addEventListener("click", (e) => {
+    if (e.target === ui.menuModal) {
+      triggerHaptic();
+      ui.menuModal.classList.remove("visible");
+    }
+  });
+  ui.menuRestartButton.addEventListener("click", () => {
+    triggerHaptic();
+    ui.menuModal.classList.remove("visible");
+    startGame();
   });
 }
 
