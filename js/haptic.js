@@ -60,7 +60,7 @@ export function triggerHaptic(duration = 100) {
   if (detectiOS()) {
     hapticLabel.click();
   } else if (navigator?.vibrate) {
-    navigator.vibrate(duration);
+    window?.navigator?.vibrate(duration) || navigator.vibrate(duration);
   } else {
     hapticLabel.click(); // Fallback
   }
