@@ -58,10 +58,10 @@ export function startGame() {
     pointBoosts: [],
     pointNerfs: [],
     blackTileModifier: 0,
-    positionalMultiplier: null,
+    positionalMultiplier: { position: 3, multiplier: 3 },
   };
   ui.ui.gameOverModal.classList.remove("visible");
-  ui.updateMultiplierDisplay(null);
+  ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
   createLetterBag();
   startNewRound();
 }
@@ -130,7 +130,7 @@ function startNewRound() {
   ui.ui.targetScoreDisplay.textContent = targetScore;
   ui.ui.roundScoreDisplay.textContent = "0";
 
-  ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier); // Add this line
+  ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
 
   checkAnswerLength();
   calculateAndDisplayBagStats();
@@ -332,7 +332,8 @@ export function handleSubmitWord() {
           }
         }
       }
-      ui.updateBlockedSlotsDisplay(blockedAnswerSlots); // Update UI
+      ui.updateBlockedSlotsDisplay(blockedAnswerSlots);
+      ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
 
       const roundComplete = roundScore >= targetScore;
       if (roundComplete && currentRound < cfg.TOTAL_ROUNDS) {
@@ -386,9 +387,16 @@ function choosePowerup() {
     },
     {
       id: "wildcard",
-      text: "Add a Wildcard (*) to the bag",
+      text: "Add a Wildcard (*) to the bag and shuffle the bag",
       shorttext: "+1 Wildcard",
-      apply: () => playerPowerups.wildcards++,
+      apply: () => {
+        playerPowerups.wildcards++;
+        const specialTiles = letterBag.filter(
+          (t) => t.isBlackTile || t.letter === "*" || t.isBoosted || t.isNerfed,
+        );
+        createLetterBag();
+        letterBag.push(...specialTiles);
+      },
     },
     {
       id: "pointboost",
@@ -450,7 +458,7 @@ function choosePowerup() {
       text: "3x score on a random letter position (1-5)",
       shorttext: "3x Positional Score",
       apply: () => {
-        const N = Math.floor(Math.random() * 5) + 1;
+        const N = Math.floor(Math.random() * 5);
         playerPowerups.positionalMultiplier = { position: N, multiplier: 3 };
         ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
       },

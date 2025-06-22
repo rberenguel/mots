@@ -50,12 +50,12 @@ export const BLACK_TILES_PER_ROUND = (round) => {
 };
 
 export const BLOCKED_SLOTS_PER_ROUND = {
-  1: { min: 0, max: 4 },
-  2: { min: 0, max: 4 },
-  3: { min: 0, max: 4 },
-  4: { min: 0, max: 4 },
+  1: { min: 0, max: 0 },
+  2: { min: 0, max: 2 },
+  3: { min: 0, max: 3 },
+  4: { min: 0, max: 3 },
   5: { min: 0, max: 4 },
-  6: { min: 0, max: 5 },
+  6: { min: 0, max: 4 },
   7: { min: 0, max: 5 },
   8: { min: 0, max: 5 },
   9: { min: 0, max: 6 },
