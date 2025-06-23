@@ -112,25 +112,26 @@ function handleGridClick(e) {
   );
 
   if (emptySlot) {
-    const rect = clickedTile.getBoundingClientRect();
+    const startRect = clickedTile.getBoundingClientRect();
+    const targetRect = emptySlot.getBoundingClientRect();
     const animatedClone = clickedTile.cloneNode(true);
-    animatedClone.classList.add("is-animated-clone");
-    document.body.appendChild(animatedClone);
 
-    animatedClone.style.left = `${rect.left}px`;
-    animatedClone.style.top = `${rect.top}px`;
-    animatedClone.style.width = `${rect.width}px`;
-    animatedClone.style.height = `${rect.height}px`;
+    animatedClone.classList.add("is-animated-clone");
+    emptySlot.appendChild(animatedClone); // Append to destination
+
+    const initialLeft = startRect.left - targetRect.left;
+    const initialTop = startRect.top - targetRect.top;
+
+    animatedClone.style.transform = `translate(${initialLeft}px, ${initialTop}px)`;
+    animatedClone.style.transition = "transform 0.2s ease-out";
 
     setTimeout(() => {
-      const targetRect = emptySlot.getBoundingClientRect();
-      animatedClone.style.left = `${targetRect.left}px`;
-      animatedClone.style.top = `${targetRect.top}px`;
+      animatedClone.style.transform = "translate(0, 0)";
     }, 10);
 
     setTimeout(() => {
-      placeTileInAnswer(clickedTile, emptySlot);
       animatedClone.remove();
+      placeTileInAnswer(clickedTile, emptySlot);
     }, 210);
   }
 }
@@ -140,19 +141,16 @@ function handleAnswerAreaClick(e) {
   const tile = target.closest(".letter-tile");
   const slot = target.closest(".answer-slot");
 
-  // Case 1: A tile was clicked -> return it to the grid with animation
   if (tile && tile.parentElement.classList.contains("answer-slot")) {
     triggerHaptic();
     animateTileReturn(tile);
     return;
   }
 
-  // Case 2: An empty slot was clicked
   if (slot && !slot.querySelector(".letter-tile")) {
     const slotIndex = parseInt(slot.dataset.index, 10);
     const isLastSlot = slotIndex === cfg.ANSWER_SLOTS - 1;
 
-    // Feature: Return all tiles if the last empty slot is clicked
     if (isLastSlot) {
       const allAnswerTiles = ui.answerArea.querySelectorAll(".letter-tile");
       if (allAnswerTiles.length > 0) {
@@ -162,7 +160,6 @@ function handleAnswerAreaClick(e) {
       return;
     }
 
-    // Feature: Compact tiles to the left (with animation)
     const allSlots = Array.from(ui.answerArea.children);
     const moves = [];
     let nextEmptySlotIndex = slotIndex;
@@ -180,37 +177,40 @@ function handleAnswerAreaClick(e) {
 
     if (moves.length > 0) {
       triggerHaptic();
+      const originalTiles = moves.map((m) => m.tile);
+      originalTiles.forEach((t) => (t.style.opacity = "0"));
+
       moves.forEach((move) => {
         const { tile, targetSlot } = move;
         const startRect = tile.getBoundingClientRect();
         const targetRect = targetSlot.getBoundingClientRect();
 
-        tile.classList.add("is-animated-clone");
-        document.body.appendChild(tile);
-        tile.style.left = `${startRect.left}px`;
-        tile.style.top = `${startRect.top}px`;
-        tile.style.width = `${startRect.width}px`;
-        tile.style.height = `${startRect.height}px`;
+        const animatedClone = tile.cloneNode(true);
+        animatedClone.style.opacity = "1";
+        animatedClone.classList.add("is-animated-clone");
+        targetSlot.appendChild(animatedClone); // Append to destination
+
+        const initialLeft = startRect.left - targetRect.left;
+        const initialTop = startRect.top - targetRect.top;
+        animatedClone.style.transform = `translate(${initialLeft}px, ${initialTop}px)`;
+        animatedClone.style.transition = "transform 0.2s ease-out";
 
         setTimeout(() => {
-          tile.style.left = `${targetRect.left}px`;
-          tile.style.top = `${targetRect.top}px`;
+          animatedClone.style.transform = "translate(0, 0)";
         }, 10);
 
-        setTimeout(() => {
-          // ** THE FIX IS HERE **
-          // Reset inline styles before re-parenting the tile
-          tile.classList.remove("is-animated-clone");
-          tile.style.position = "";
-          tile.style.left = "";
-          tile.style.top = "";
-          tile.style.width = "";
-          tile.style.height = "";
-          targetSlot.appendChild(tile);
-        }, 210);
+        setTimeout(() => animatedClone.remove(), 210);
       });
 
-      setTimeout(checkAnswerLength, 220);
+      setTimeout(() => {
+        originalTiles.forEach((t) => t.remove());
+        moves.forEach((move) => {
+          const { tile, targetSlot } = move;
+          targetSlot.appendChild(tile);
+          tile.style.opacity = "1";
+        });
+        checkAnswerLength();
+      }, 220);
     }
   }
 }
@@ -225,23 +225,27 @@ function animateTileReturn(tileInAnswer) {
 
   const startRect = tileInAnswer.getBoundingClientRect();
   const targetRect = originTile.getBoundingClientRect();
+  const targetSlot = originTile.parentElement;
 
-  tileInAnswer.classList.add("is-animated-clone");
-  document.body.appendChild(tileInAnswer);
-  tileInAnswer.style.left = `${startRect.left}px`;
-  tileInAnswer.style.top = `${startRect.top}px`;
-  tileInAnswer.style.width = `${startRect.width}px`;
-  tileInAnswer.style.height = `${startRect.height}px`;
-
+  // Make original tile invisible but keep for layout
   originTile.style.opacity = "0";
 
+  // The animated element is the one we clicked
+  const animatedClone = tileInAnswer;
+  animatedClone.classList.add("is-animated-clone");
+  targetSlot.appendChild(animatedClone); // Append to destination slot
+
+  const initialLeft = startRect.left - targetRect.left;
+  const initialTop = startRect.top - targetRect.top;
+  animatedClone.style.transform = `translate(${initialLeft}px, ${initialTop}px)`;
+  animatedClone.style.transition = "transform 0.2s ease-out";
+
   setTimeout(() => {
-    tileInAnswer.style.left = `${targetRect.left}px`;
-    tileInAnswer.style.top = `${targetRect.top}px`;
+    animatedClone.style.transform = "translate(0, 0)";
   }, 10);
 
   setTimeout(() => {
-    tileInAnswer.remove();
+    animatedClone.remove();
     originTile.classList.remove("is-ghost");
     originTile.style.opacity = "1";
     checkAnswerLength();
