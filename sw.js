@@ -1,4 +1,4 @@
-const CACHE_NAME = "mots-cache-v0.0.12";
+const CACHE_NAME = "mots-cache-v0.1.0";
 const urlsToCache = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const urlsToCache = [
   "./js/keyboard.js",
   "./js/main.js",
   "./js/ui.js",
+  "./lib/idb-keyval.js",
   "./icon.png",
   "./icon192.png",
   "./fonts/InterDisplay-Bold.woff2",
@@ -18,6 +19,10 @@ const urlsToCache = [
   "./fonts/iconoir/iconoir.css",
   "./fonts/inter.css",
   "./dict/words.txt",
+  "./dict/words_ca.txt",
+  "./dict/words_de.txt",
+  "./dict/words_es.txt",
+  "./dict/words_fr.txt",
 ];
 
 // Install event: opens a cache and adds the core files to it.

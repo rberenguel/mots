@@ -2,6 +2,8 @@ import * as cfg from "./config.js";
 import * as ui from "./ui.js";
 import { triggerHaptic } from "./haptic.js";
 
+export let currentGameLanguage = "en"; // Default language
+
 let gameTiles = []; // Holds the persistent state of letter tiles (A-Z) for the entire game.
 let activePowerups = [];
 let longestWord = { word: "", length: 0 };
@@ -21,22 +23,80 @@ let playerPowerups = {
   blackTileModifier: 0,
   positionalMultiplier: null,
   autoRefill: false,
+  quUpgrade: false,
+  affixes: [],
 };
 
 let blockedAnswerSlots = [];
+
+/**
+ * Sets a seed word to appear on the next new game's grid.
+ * Call this from the browser console, e.g., setSeedWord("MOTS")
+ * @param {string} word The word to seed.
+ */
+export function setSeedWord(word = "") {
+  cfg.props.seedWord = word.toUpperCase();
+  if (cfg.props.seedWord) {
+    console.log(
+      `Seed word set to: ${cfg.props.seedWord}. Restart the game to see it.`,
+    );
+    startGame();
+  } else {
+    console.log("Seed word cleared.");
+  }
+}
+
+// Expose the helper to the global scope for easy console access
+window.setSeedWord = setSeedWord;
+
+const stripVowelAccents = (str) => {
+  let s = str;
+  s = s.replace(/[áàâä]/g, "a");
+  s = s.replace(/[éèêë]/g, "e");
+  s = s.replace(/[íìîï]/g, "i");
+  s = s.replace(/[óòôö]/g, "o");
+  s = s.replace(/[úùûü]/g, "u");
+  return s;
+};
 
 export function getGameStats() {
   return { activePowerups, longestWord, highestScore };
 }
 
-export async function initializeGame() {
+export async function setLanguage(lang) {
+  if (cfg.letterDistributions[lang]) {
+    currentGameLanguage = lang;
+  }
+}
+
+export async function loadCurrentLanguage() {
   try {
-    const response = await fetch("./dict/words.txt");
-    wordList = new Set((await response.text()).split("\n"));
+    const dictionaryPath =
+      currentGameLanguage === "en"
+        ? "./dict/words.txt"
+        : `./dict/words_${currentGameLanguage}.txt`;
+    const response = await fetch(dictionaryPath);
+    const text = await response.text();
+    let words = text.split("\n");
+
+    // For FR, ES, CA, strip accents from dictionary words. For DE, keep them to preserve umlauts.
+    if (["fr", "es", "ca"].includes(currentGameLanguage)) {
+      words = words.map(stripVowelAccents);
+    }
+    console.info(`Loaded word list for language ${currentGameLanguage}`);
+    wordList = new Set(words.map((w) => w.trim().toLowerCase().normalize()));
     window.wordList = wordList;
   } catch (error) {
-    console.error("Failed to load word list:", error);
+    console.error(
+      "Failed to load word list for language:",
+      currentGameLanguage,
+      error,
+    );
   }
+}
+
+export async function initializeGame() {
+  loadCurrentLanguage();
   ui.createGridSlots(cfg.GRID_SIZE);
   ui.createAnswerSlots();
   startGame();
@@ -50,14 +110,15 @@ export function startGame() {
   activePowerups = [];
   longestWord = { word: "", length: 0 };
   highestScore = { word: "", score: 0 };
+  loadCurrentLanguage();
 
-  // Initialize the persistent tile set for the game
+  const distribution = cfg.letterDistributions[currentGameLanguage];
   gameTiles = [];
-  for (const letter in cfg.letterDistribution) {
-    for (let i = 0; i < cfg.letterDistribution[letter].c; i++) {
+  for (const letter in distribution) {
+    for (let i = 0; i < distribution[letter].c; i++) {
       gameTiles.push({
         letter,
-        points: cfg.letterDistribution[letter].p,
+        points: distribution[letter].p,
         isBoosted: false,
         isNerfed: false,
       });
@@ -69,10 +130,16 @@ export function startGame() {
     blackTileModifier: 0,
     positionalMultiplier: null,
     autoRefill: false,
+    quUpgrade: false,
+    affixes: [],
   };
 
   ui.ui.gameOverModal.classList.remove("visible");
   ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
+  ui.updateLanguageDisplay(currentGameLanguage); // Update language display
+  const notice = document.getElementById("lang-change-notice");
+  if (notice) notice.textContent = ""; // Clear language change notice
+
   createLetterBag();
   startNewRound();
 }
@@ -162,6 +229,7 @@ function resetBoardForNewRound() {
 
 function createLetterBag() {
   // Start with the persistent, potentially modified, letter tiles
+  window.letterBag = letterBag;
   letterBag = [...gameTiles];
 
   // Add wildcards for this round
@@ -171,6 +239,14 @@ function createLetterBag() {
       points: 0,
       isBoosted: false,
       isNerfed: false,
+    });
+  }
+
+  for (const affix of playerPowerups.affixes) {
+    letterBag.push({
+      letter: affix.letters,
+      points: affix.points,
+      isAffix: true,
     });
   }
 
@@ -192,19 +268,60 @@ function updatePlays(change) {
 }
 
 function refillGrid(count) {
-  const emptySlots = Array.from(
+  const allEmptySlots = Array.from(
     ui.ui.letterGrid.querySelectorAll(".grid-slot:not(:has(.letter-tile))"),
   );
-  for (let i = 0; i < (count || emptySlots.length); i++) {
-    if (letterBag.length === 0) createLetterBag();
-    if (emptySlots[i]) {
-      const letter = letterBag.splice(
+  let slotsToFill = allEmptySlots.slice(); // Create a mutable copy
+
+  // --- NEW SEEDING LOGIC ---
+  // Check for a seed word on the very first grid fill of a new game
+  const isFirstFill =
+    currentRound <= 1 && allEmptySlots.length === cfg.GRID_SIZE;
+
+  if (cfg.props.seedWord && isFirstFill) {
+    const seedLetters = cfg.props.seedWord.toUpperCase().split("");
+    const filledSlots = new Set();
+
+    for (const letter of seedLetters) {
+      if (slotsToFill.length === 0) break;
+
+      // Find the required letter in the bag
+      const tileIndex = letterBag.findIndex((t) => t.letter === letter);
+
+      if (tileIndex !== -1) {
+        const tileData = letterBag.splice(tileIndex, 1)[0];
+        const slot = slotsToFill.shift(); // Take the next available slot
+        slot.appendChild(ui.createLetterTile(tileData, nextTileId++));
+        filledSlots.add(slot);
+      }
+    }
+    // Clear the seed word after using it once
+    setSeedWord("");
+    // Recalculate slots that still need to be filled
+    slotsToFill = allEmptySlots.filter((s) => !filledSlots.has(s));
+  }
+  // --- END OF SEEDING LOGIC ---
+
+  // Fill the remaining (or all) slots randomly
+  const fillCount = count || slotsToFill.length;
+  for (let i = 0; i < fillCount; i++) {
+    if (slotsToFill[i]) {
+      if (letterBag.length === 0) createLetterBag();
+      const tileData = letterBag.splice(
         Math.floor(Math.random() * letterBag.length),
         1,
       )[0];
-      emptySlots[i].appendChild(ui.createLetterTile(letter, nextTileId++));
+      const tileElement = ui.createLetterTile(tileData, nextTileId++);
+
+      // If QU upgrade is active, update the new tile's appearance
+      if (playerPowerups.quUpgrade && tileData.letter === "Q") {
+        ui.updateQUTile(tileElement);
+      }
+
+      slotsToFill[i].appendChild(tileElement);
     }
   }
+
   ui.updateRedrawBadge(redrawsLeft);
   calculateAndDisplayBagStats();
 }
@@ -248,7 +365,14 @@ export function handleSubmitWord() {
     const t = s.querySelector(".letter-tile");
     if (t) {
       placedTiles.push(t);
-      word += t.dataset.letter;
+      let letter = t.dataset.letter;
+
+      // ** MODIFIED to handle QU upgrade **
+      if (playerPowerups.quUpgrade && letter === "Q") {
+        word += "QU";
+      } else {
+        word += letter;
+      }
 
       let tilePoints = parseInt(t.dataset.points, 10);
       if (
@@ -321,15 +445,38 @@ export function checkAnswerLength() {
 }
 
 function isWordValid(word) {
-  if (!word.includes("*")) return wordList.has(word.toLowerCase());
-  const alphabet = "abcdefghijklmnopqrstuvwxyz";
-  for (let char of alphabet) {
-    if (wordList.has(word.replace(/\*/g, char).toLowerCase())) return true;
-  }
-  return false;
+  // This helper function will recursively check all combinations
+  console.info(`Validating ${word}`);
+  const checkRecursive = (currentWord) => {
+    const wildcardIndex = currentWord.indexOf("*");
+
+    // Base case: No more wildcards, check the word against the list
+    if (wildcardIndex === -1) {
+      return wordList.has(currentWord.toLowerCase().normalize());
+    }
+
+    const alphabet = cfg.alphabets[currentGameLanguage];
+    // Recursive step: Try every letter for the current wildcard
+    for (const char of alphabet) {
+      const newWord =
+        currentWord.substring(0, wildcardIndex) +
+        char +
+        currentWord.substring(wildcardIndex + 1);
+
+      // If any recursive path finds a valid word, return true immediately
+      if (checkRecursive(newWord)) {
+        return true;
+      }
+    }
+
+    // If no letter combination for this wildcard worked, return false
+    return false;
+  };
+
+  return checkRecursive(word);
 }
 
-function choosePowerup() {
+function getAvailablePowerups() {
   const powerupList = [
     {
       id: "redraw",
@@ -360,6 +507,30 @@ function choosePowerup() {
         tile.isBoosted = true;
       },
     },
+    {
+      id: "add_black_tile",
+      text: "Add a black tile to the bag for +2 plays",
+      shorttext: "+2 Plays (adds black tile)",
+      apply: () => {
+        playerPowerups.blackTileModifier++;
+        updatePlays(2);
+      },
+    },
+    {
+      id: "point_nerf",
+      text: "-1 to a random letter tile for +1 play",
+      shorttext: "+1 Play (letter point nerf)",
+      apply: () => {
+        const eligibleTiles = gameTiles.filter((t) => t.points > 0);
+        if (eligibleTiles.length > 0) {
+          const tile =
+            eligibleTiles[Math.floor(Math.random() * eligibleTiles.length)];
+          tile.points--;
+          tile.isNerfed = true;
+        }
+        updatePlays(1);
+      },
+    },
   ];
 
   const upcomingBlackTiles =
@@ -375,30 +546,6 @@ function choosePowerup() {
     });
   }
 
-  powerupList.push({
-    id: "add_black_tile",
-    text: "Add a black tile to the bag for +2 plays",
-    shorttext: "+2 Plays (adds black tile)",
-    apply: () => {
-      playerPowerups.blackTileModifier++;
-      updatePlays(2);
-    },
-  });
-  powerupList.push({
-    id: "point_nerf",
-    text: "-1 to a random letter tile for +1 play",
-    shorttext: "+1 Play (letter point nerf)",
-    apply: () => {
-      const eligibleTiles = gameTiles.filter((t) => t.points > 0);
-      if (eligibleTiles.length > 0) {
-        const tile =
-          eligibleTiles[Math.floor(Math.random() * eligibleTiles.length)];
-        tile.points--;
-        tile.isNerfed = true;
-      }
-      updatePlays(1);
-    },
-  });
   if (!playerPowerups.autoRefill) {
     powerupList.push({
       id: "auto_refill_bag",
@@ -410,6 +557,35 @@ function choosePowerup() {
       },
     });
   }
+
+  const langAffixes = cfg.affixTiles[currentGameLanguage];
+  if (langAffixes && langAffixes.length > 0) {
+    for (let affix of langAffixes) {
+      powerupList.push({
+        id: `add_affix_${affix.letters.toLowerCase()}`,
+        text: `Add a "${affix.letters}" tile to the bag`,
+        shorttext: `+1 "${affix.letters}" Tile`,
+        apply: () => {
+          playerPowerups.affixes.push(affix);
+          createLetterBag();
+        },
+      });
+    }
+  }
+
+  if (!playerPowerups.quUpgrade) {
+    powerupList.push({
+      id: "qu_upgrade",
+      text: "All 'Q' tiles now count as 'QU'",
+      shorttext: "Q -> QU Upgrade",
+      apply: () => {
+        playerPowerups.quUpgrade = true;
+        ui.updateVisibleQTiles();
+      },
+    });
+  }
+
+  // This power-up was missed in the previous implementation, adding it back
   if (!playerPowerups.positionalMultiplier) {
     powerupList.push({
       id: "positional_multiplier",
@@ -423,9 +599,41 @@ function choosePowerup() {
     });
   }
 
+  return powerupList;
+}
+
+function choosePowerup() {
+  const powerupList = getAvailablePowerups();
   ui.presentPowerupChoice(powerupList, (chosenOption) => {
     chosenOption.apply();
     activePowerups.push(chosenOption);
     resetBoardForNewRound();
   });
+}
+
+/**
+ * Forces a power-up to be applied for testing purposes.
+ * Call from the browser console, e.g., forcePowerup('qu_upgrade')
+ * @param {string} powerupId The ID of the power-up to apply.
+ */
+export function forceApplyPowerup(powerupId) {
+  const allPowerups = getAvailablePowerups();
+  const powerup = allPowerups.find((p) => p.id === powerupId);
+
+  if (powerup) {
+    console.log(`Forcing power-up: ${powerup.text}`);
+    powerup.apply();
+    activePowerups.push(powerup);
+    // Refresh stats display to reflect changes
+    calculateAndDisplayBagStats();
+    console.log("Power-up applied. Current state:", playerPowerups);
+  } else {
+    console.error(
+      `Power-up with ID "${powerupId}" not found or not available.`,
+    );
+    console.log(
+      "Available IDs:",
+      allPowerups.map((p) => p.id),
+    );
+  }
 }

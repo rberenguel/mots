@@ -1,5 +1,7 @@
 import { ANSWER_SLOTS, bonusSlots } from "./config.js";
 import { getGameStats } from "./game.js";
+import * as cfg from "./config.js";
+import * as game from "./game.js";
 
 export const ui = {
   letterGrid: document.getElementById("letter-grid"),
@@ -11,6 +13,7 @@ export const ui = {
   helpButton: document.getElementById("help-button"),
   roundScoreDisplay: document.getElementById("round-score-display"),
   roundDisplay: document.getElementById("round-display"),
+  langDisplay: document.getElementById("lang-display"),
   playsDisplay: document.getElementById("plays-display"),
   playsCounter: document.getElementById("plays-counter"),
   targetScoreDisplay: document.getElementById("target-score-display"),
@@ -29,6 +32,7 @@ export const ui = {
   bagNerfedDisplay: document.getElementById("bag-nerfed-display"),
   menuButton: document.getElementById("menu-button"),
   menuModal: document.getElementById("menu-modal"),
+  menuStats: document.getElementById("menu-stats"),
   menuCloseButton: document.getElementById("menu-close-button"),
   menuRestartButton: document.getElementById("menu-restart-button"),
   menuPowerupsList: document.getElementById("menu-powerups-list"),
@@ -94,6 +98,15 @@ export function createLetterTile(letterObj, nextId) {
     tile.draggable = true;
 
     let pointsClasses = "letter-points";
+
+    if (letterObj.isAffix) {
+      tile.style.fontSize = "100%";
+    }
+
+    if (letterObj.letter.length > 3) {
+      tile.style.fontSize = "80%";
+    }
+
     if (letterObj.isBoosted) pointsClasses += " boosted";
     if (letterObj.isNerfed) pointsClasses += " nerfed";
 
@@ -109,6 +122,21 @@ export function createLetterTile(letterObj, nextId) {
     tile.classList.remove("letter-tile-bounce"),
   );
   return tile;
+}
+
+export function updateQUTile(tileElement) {
+  if (tileElement && tileElement.dataset.letter === "Q") {
+    const letterSpan = tileElement.querySelector("span");
+    if (letterSpan) {
+      letterSpan.textContent = "Qu";
+    }
+  }
+}
+
+export function updateVisibleQTiles() {
+  document.querySelectorAll(".letter-tile").forEach((tile) => {
+    updateQUTile(tile);
+  });
 }
 
 export function updateRedrawBadge(count) {
@@ -211,6 +239,14 @@ export function shuffleGridAnimation() {
   });
 }
 
+export function updateLanguageDisplay(lang) {
+  const display = ui.langDisplay;
+  if (display) {
+    display.innerHTML = `${cfg.flags[lang]} ${lang.toUpperCase()}`;
+    display.style.display = "block"; // Make sure it's visible
+  }
+}
+
 export function showMenuModal() {
   const stats = getGameStats();
 
@@ -235,6 +271,34 @@ export function showMenuModal() {
     ? `${stats.highestScore.word} (${stats.highestScore.score} pts)`
     : "-";
 
+  if (!document.getElementById("language-selector-container")) {
+    const settingsSection = document.createElement("div");
+    settingsSection.className = "menu-section";
+    settingsSection.id = "language-selector-container";
+    settingsSection.innerHTML = `
+      <h3>Language (New Game)</h3>
+      <select id="language-select" class="language-select">
+        <option value="en">English</option>
+        <option value="de">German</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="ca">Catalan</option>
+      </select>
+      <div id="lang-change-notice" class="lang-notice"></div>
+    `;
+    ui.menuStats.parentNode.insertBefore(
+      settingsSection,
+      ui.menuStats.nextSibling,
+    );
+  }
+
+  // Set dropdown to current language
+  const langSelect = document.getElementById("language-select");
+  if (langSelect) {
+    langSelect.value = game.currentGameLanguage;
+  }
+
+  ui.menuModal.classList.add("visible");
   ui.menuModal.classList.add("visible");
 }
 

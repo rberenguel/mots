@@ -761,3 +761,20 @@ kbd {
   display: flex;
   justify-content: space-between;
 }
+
+.language-select {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: var(--base03);
+  color: var(--base1);
+  border: 1px solid var(--base01);
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.lang-notice {
+  color: var(--red);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  height: 1em; /* Reserve space to prevent layout shift */
+}

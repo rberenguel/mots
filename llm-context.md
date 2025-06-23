@@ -16,6 +16,7 @@ This project is a web-based, single-player word game built with vanilla HTML, CS
 - **Letter & Word Rules:**
 
   - The game uses a standard English letter distribution and point system, similar to Scrabble.
+    - Currently it also supports Catalan, Spanish, French, and German. The word dictionaries are of varying length and quality though. Enough to be fun I think.
   - Players have a 16-tile (4x4) grid of letters to draw from.
   - The answer area accommodates words up to 10 letters long.
   - Submitted words must be at least **4 letters long** to be valid.

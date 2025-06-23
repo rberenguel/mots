@@ -1,9 +1,10 @@
 import { initHaptic } from "./haptic.js";
-import { initializeGame } from "./game.js";
+import { forceApplyPowerup, initializeGame, setLanguage } from "./game.js";
 import { addEventListeners } from "./events.js";
 import { initializeKeyboard } from "./keyboard.js"; // Add this line
 import { props } from "./config.js";
 import { ui } from "./ui.js";
+import { get } from "../lib/idb-keyval.js";
 
 async function fetchSelfManifest() {
   try {
@@ -24,10 +25,23 @@ async function fetchSelfManifest() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initHaptic();
+  const savedLang = await get("language");
+  if (savedLang) {
+    await setLanguage(savedLang);
+  }
+
+  // Set the radio button to reflect the current language
+  const langSelector = document.querySelector(
+    `input[name="language"][value="${savedLang || "en"}"]`,
+  );
+  if (langSelector) {
+    langSelector.checked = true;
+  }
   initializeGame();
   addEventListeners();
   initializeKeyboard();
   fetchSelfManifest();
+  window.forcePowerup = forceApplyPowerup;
 });

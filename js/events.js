@@ -4,9 +4,11 @@ import {
   handleRedraw,
   handleSubmitWord,
   checkAnswerLength,
+  setLanguage,
 } from "./game.js";
 import * as cfg from "./config.js";
 import { triggerHaptic } from "./haptic.js";
+import { get, set } from "../lib/idb-keyval.js";
 
 let draggedTile = null;
 let touchDragTile = null;
@@ -64,10 +66,31 @@ function addMenuModalListeners() {
       ui.menuModal.classList.remove("visible");
     }
   });
-  ui.menuRestartButton.addEventListener("click", () => {
+  ui.menuRestartButton.addEventListener("click", async () => {
     triggerHaptic();
     ui.menuModal.classList.remove("visible");
+
+    // Get the latest language from storage and update the game state
+    const savedLang = await get("language");
+    if (savedLang) {
+      await setLanguage(savedLang);
+    }
+
+    // Now start the game with the correct language
     startGame();
+  });
+  ui.menuModal.addEventListener("change", (e) => {
+    if (e.target.id === "language-select") {
+      const selectedLang = e.target.value;
+      set("language", selectedLang);
+      triggerHaptic();
+
+      const notice = document.getElementById("lang-change-notice");
+      if (notice) {
+        const langName = e.target.options[e.target.selectedIndex].text;
+        notice.textContent = `Language will be set to ${langName} on next game.`;
+      }
+    }
   });
 }
 
