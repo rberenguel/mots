@@ -43,16 +43,18 @@ function handleKeyDown(e) {
       if (sent) {
         let missedText = "";
         const stats = getGameStats();
-        missedText += stats.lastMissedLongestWord.word
-          ? `<p><span class="missed">missed:</span> <span class="missed-word">${stats.lastMissedLongestWord.word.toUpperCase()} (${
-              stats.lastMissedLongestWord.length
-            })</span></p>`
-          : "";
-        missedText += stats.lastMissedHighestScoreWord.word
-          ? `<p><p><span class="missed">missed:</span>  <span class="missed-word">${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${
-              stats.lastMissedHighestScoreWord.score
-            } pts)</span></p>`
-          : "";
+        if (stats.lastMissedLongestWord.word)
+          missedText += stats.lastMissedLongestWord.word
+            ? `<p><span class="missed">missed:</span> <span class="missed-word">${stats.lastMissedLongestWord.word.toUpperCase()} (${
+                stats.lastMissedLongestWord.length
+              })</span></p>`
+            : "";
+        if (stats.lastMissedHighestScoreWord.word)
+          missedText += stats.lastMissedHighestScoreWord.word
+            ? `<p><p><span class="missed">missed:</span>  <span class="missed-word">${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${
+                stats.lastMissedHighestScoreWord.score
+              } pts)</span></p>`
+            : "";
         ui.missedText.innerHTML = missedText;
         setTimeout(() => {
           ui.missedText.style.opacity = "1";
