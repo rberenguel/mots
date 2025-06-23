@@ -5,6 +5,7 @@ import {
   handleSubmitWord,
   checkAnswerLength,
 } from "./game.js";
+import * as cfg from "./config.js";
 import { triggerHaptic } from "./haptic.js";
 
 let draggedTile = null;
@@ -91,38 +92,160 @@ function handleGridClick(e) {
   const clickedTile = e.target.closest(".letter-tile");
   if (!clickedTile || clickedTile.classList.contains("black-tile")) return;
   triggerHaptic();
+
+  // Return tile to grid by clicking the ghost
   if (clickedTile.classList.contains("is-ghost")) {
     const originId = clickedTile.id;
     const tileInAnswer = ui.answerArea.querySelector(
       `[data-origin-id="${originId}"]`,
     );
-
     if (tileInAnswer) {
-      tileInAnswer.remove();
-      clickedTile.classList.remove("is-ghost");
-      checkAnswerLength();
+      animateTileReturn(tileInAnswer);
     }
-  } else {
-    const emptySlot = Array.from(ui.answerArea.children).find(
-      (s) =>
-        !s.querySelector(".letter-tile") && !s.classList.contains("is-blocked"),
-    );
+    return;
+  }
 
-    if (emptySlot) {
+  // Move tile to answer area
+  const emptySlot = Array.from(ui.answerArea.children).find(
+    (s) =>
+      !s.querySelector(".letter-tile") && !s.classList.contains("is-blocked"),
+  );
+
+  if (emptySlot) {
+    const rect = clickedTile.getBoundingClientRect();
+    const animatedClone = clickedTile.cloneNode(true);
+    animatedClone.classList.add("is-animated-clone");
+    document.body.appendChild(animatedClone);
+
+    animatedClone.style.left = `${rect.left}px`;
+    animatedClone.style.top = `${rect.top}px`;
+    animatedClone.style.width = `${rect.width}px`;
+    animatedClone.style.height = `${rect.height}px`;
+
+    setTimeout(() => {
+      const targetRect = emptySlot.getBoundingClientRect();
+      animatedClone.style.left = `${targetRect.left}px`;
+      animatedClone.style.top = `${targetRect.top}px`;
+    }, 10);
+
+    setTimeout(() => {
       placeTileInAnswer(clickedTile, emptySlot);
-    }
+      animatedClone.remove();
+    }, 210);
   }
 }
 
 function handleAnswerAreaClick(e) {
-  triggerHaptic();
-  const tile = e.target.closest(".letter-tile");
+  const target = e.target;
+  const tile = target.closest(".letter-tile");
+  const slot = target.closest(".answer-slot");
+
+  // Case 1: A tile was clicked -> return it to the grid with animation
   if (tile && tile.parentElement.classList.contains("answer-slot")) {
-    const originTile = document.getElementById(tile.dataset.originId);
-    if (originTile) originTile.classList.remove("is-ghost");
-    tile.remove();
-    checkAnswerLength();
+    triggerHaptic();
+    animateTileReturn(tile);
+    return;
   }
+
+  // Case 2: An empty slot was clicked
+  if (slot && !slot.querySelector(".letter-tile")) {
+    const slotIndex = parseInt(slot.dataset.index, 10);
+    const isLastSlot = slotIndex === cfg.ANSWER_SLOTS - 1;
+
+    // Feature: Return all tiles if the last empty slot is clicked
+    if (isLastSlot) {
+      const allAnswerTiles = ui.answerArea.querySelectorAll(".letter-tile");
+      if (allAnswerTiles.length > 0) {
+        triggerHaptic();
+        allAnswerTiles.forEach((t) => animateTileReturn(t));
+      }
+      return;
+    }
+
+    // Feature: Compact tiles to the left (with animation)
+    const allSlots = Array.from(ui.answerArea.children);
+    const moves = [];
+    let nextEmptySlotIndex = slotIndex;
+
+    for (let i = slotIndex + 1; i < allSlots.length; i++) {
+      const tileToMove = allSlots[i].querySelector(".letter-tile");
+      if (tileToMove) {
+        moves.push({
+          tile: tileToMove,
+          targetSlot: allSlots[nextEmptySlotIndex],
+        });
+        nextEmptySlotIndex++;
+      }
+    }
+
+    if (moves.length > 0) {
+      triggerHaptic();
+      moves.forEach((move) => {
+        const { tile, targetSlot } = move;
+        const startRect = tile.getBoundingClientRect();
+        const targetRect = targetSlot.getBoundingClientRect();
+
+        tile.classList.add("is-animated-clone");
+        document.body.appendChild(tile);
+        tile.style.left = `${startRect.left}px`;
+        tile.style.top = `${startRect.top}px`;
+        tile.style.width = `${startRect.width}px`;
+        tile.style.height = `${startRect.height}px`;
+
+        setTimeout(() => {
+          tile.style.left = `${targetRect.left}px`;
+          tile.style.top = `${targetRect.top}px`;
+        }, 10);
+
+        setTimeout(() => {
+          // ** THE FIX IS HERE **
+          // Reset inline styles before re-parenting the tile
+          tile.classList.remove("is-animated-clone");
+          tile.style.position = "";
+          tile.style.left = "";
+          tile.style.top = "";
+          tile.style.width = "";
+          tile.style.height = "";
+          targetSlot.appendChild(tile);
+        }, 210);
+      });
+
+      setTimeout(checkAnswerLength, 220);
+    }
+  }
+}
+
+function animateTileReturn(tileInAnswer) {
+  const originTile = document.getElementById(tileInAnswer.dataset.originId);
+  if (!originTile) {
+    tileInAnswer.remove();
+    checkAnswerLength();
+    return;
+  }
+
+  const startRect = tileInAnswer.getBoundingClientRect();
+  const targetRect = originTile.getBoundingClientRect();
+
+  tileInAnswer.classList.add("is-animated-clone");
+  document.body.appendChild(tileInAnswer);
+  tileInAnswer.style.left = `${startRect.left}px`;
+  tileInAnswer.style.top = `${startRect.top}px`;
+  tileInAnswer.style.width = `${startRect.width}px`;
+  tileInAnswer.style.height = `${startRect.height}px`;
+
+  originTile.style.opacity = "0";
+
+  setTimeout(() => {
+    tileInAnswer.style.left = `${targetRect.left}px`;
+    tileInAnswer.style.top = `${targetRect.top}px`;
+  }, 10);
+
+  setTimeout(() => {
+    tileInAnswer.remove();
+    originTile.classList.remove("is-ghost");
+    originTile.style.opacity = "1";
+    checkAnswerLength();
+  }, 210);
 }
 
 // --- Mouse D&D Handlers ---
@@ -175,35 +298,24 @@ function handleTouchMove(e) {
   const dx = touch.clientX - touchStartPos.x;
   const dy = touch.clientY - touchStartPos.y;
 
-  // Only start dragging if the finger has moved beyond a certain threshold
   if (
     !isDragging &&
     (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)
   ) {
     isDragging = true;
-    e.preventDefault(); // Prevent page scrolling
+    e.preventDefault();
     triggerHaptic();
 
-    // Get the exact size of the tile before we mess with it
     const rect = draggedTile.getBoundingClientRect();
-
-    // Clone the tile to create a draggable copy
     touchDragTile = draggedTile.cloneNode(true);
     touchDragTile.classList.add("is-touch-dragging");
-
-    // Set the clone's size explicitly so it doesn't expand to fill the body
     touchDragTile.style.width = `${rect.width}px`;
     touchDragTile.style.height = `${rect.height}px`;
-
     document.body.appendChild(touchDragTile);
-
-    // Position the clone under the finger
     moveElement(
       touch.clientX + rect.width / 2,
       touch.clientY + rect.height / 2,
     );
-
-    // Make the original tile in the grid a "ghost"
     draggedTile.style.opacity = "0.3";
   }
 
@@ -225,21 +337,17 @@ function handleTouchEnd(e) {
       const answerSlot = dropTarget ? dropTarget.closest(".answer-slot") : null;
 
       if (answerSlot && !answerSlot.classList.contains("is-blocked")) {
-        // placeTileInAnswer now correctly handles making the original tile a ghost
         placeTileInAnswer(draggedTile, answerSlot);
       } else {
-        // If not dropped on a valid slot, restore the original tile's appearance
         draggedTile.style.opacity = "1";
       }
 
       document.body.removeChild(touchDragTile);
     }
   } else if (draggedTile) {
-    // This handles the case of a tap without a drag
     draggedTile.style.opacity = "1";
   }
 
-  // Reset all state variables
   draggedTile = null;
   touchDragTile = null;
   isDragging = false;
@@ -255,15 +363,12 @@ function placeTileInAnswer(tile, answerSlot) {
     const originTile = document.getElementById(existingTile.dataset.originId);
     if (originTile) {
       originTile.classList.remove("is-ghost");
-      // Ensure opacity is reset when a tile is returned to the grid
       originTile.style.opacity = "1";
     }
     existingTile.remove();
   }
 
-  // The original tile in the grid becomes a permanent ghost for this turn
   tile.classList.add("is-ghost");
-  // Let the .is-ghost class handle the opacity, remove inline style
   tile.style.opacity = "";
 
   const newTile = tile.cloneNode(true);
@@ -282,7 +387,6 @@ function placeTileInAnswer(tile, answerSlot) {
 
 function moveElement(x, y) {
   if (!touchDragTile) return;
-  // Center the tile on the touch point
   touchDragTile.style.left = `${x - touchDragTile.offsetWidth / 2}px`;
   touchDragTile.style.top = `${y - touchDragTile.offsetHeight / 2}px`;
 }

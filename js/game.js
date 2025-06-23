@@ -2,6 +2,7 @@ import * as cfg from "./config.js";
 import * as ui from "./ui.js";
 import { triggerHaptic } from "./haptic.js";
 
+let gameTiles = []; // Holds the persistent state of letter tiles (A-Z) for the entire game.
 let activePowerups = [];
 let longestWord = { word: "", length: 0 };
 let highestScore = { word: "", score: 0 };
@@ -17,8 +18,6 @@ let currentRound = 0,
 
 let playerPowerups = {
   wildcards: 0,
-  pointBoosts: [],
-  pointNerfs: [],
   blackTileModifier: 0,
   positionalMultiplier: null,
   autoRefill: false,
@@ -48,18 +47,30 @@ export function startGame() {
   currentRound = 0;
   totalPlays = 10;
   redrawsLeft = 2;
-  // Reset stats for new game
   activePowerups = [];
   longestWord = { word: "", length: 0 };
   highestScore = { word: "", score: 0 };
 
+  // Initialize the persistent tile set for the game
+  gameTiles = [];
+  for (const letter in cfg.letterDistribution) {
+    for (let i = 0; i < cfg.letterDistribution[letter].c; i++) {
+      gameTiles.push({
+        letter,
+        points: cfg.letterDistribution[letter].p,
+        isBoosted: false,
+        isNerfed: false,
+      });
+    }
+  }
+
   playerPowerups = {
     wildcards: 0,
-    pointBoosts: [],
-    pointNerfs: [],
     blackTileModifier: 0,
     positionalMultiplier: null,
+    autoRefill: false,
   };
+
   ui.ui.gameOverModal.classList.remove("visible");
   ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
   createLetterBag();
@@ -67,21 +78,24 @@ export function startGame() {
 }
 
 function calculateAndDisplayBagStats() {
-  let totalBag = 0;
-  for (const letter in cfg.letterDistribution) {
-    for (let i = 0; i < cfg.letterDistribution[letter].c; i++) {
-      totalBag++;
-    }
-  }
+  const standardTilesTotal = gameTiles.length;
+
+  const totalBlackTiles = Math.max(
+    0,
+    cfg.BLACK_TILES_PER_ROUND(currentRound) + playerPowerups.blackTileModifier,
+  );
+  const totalWildcards = playerPowerups.wildcards || 0;
+  const totalBoosted = gameTiles.filter((t) => t.isBoosted).length;
+  const totalNerfed = gameTiles.filter((t) => t.isNerfed).length;
+
   const totals = {
-    total: totalBag,
-    black:
-      playerPowerups.blackTileModifier +
-      cfg.BLACK_TILES_PER_ROUND(currentRound),
-    wildcard: playerPowerups.wildcards || 0,
-    boosted: playerPowerups.boosted || 0,
-    nerfed: playerPowerups.nerfed || 0,
+    total: standardTilesTotal + totalWildcards + totalBlackTiles,
+    black: totalBlackTiles,
+    wildcard: totalWildcards,
+    boosted: totalBoosted,
+    nerfed: totalNerfed,
   };
+
   const stats = {
     total: letterBag.length,
     black: letterBag.filter((t) => t.isBlackTile).length,
@@ -99,11 +113,7 @@ function startNewRound() {
   updatePlays(0);
 
   if (playerPowerups.autoRefill && currentRound > 1) {
-    const specialTiles = letterBag.filter(
-      (t) => t.isBlackTile || t.letter === "*" || t.isBoosted || t.isNerfed,
-    );
-    createLetterBag(); // Resets to standard letters
-    letterBag.push(...specialTiles);
+    createLetterBag();
   }
 
   blockedAnswerSlots = [];
@@ -121,7 +131,6 @@ function startNewRound() {
       blockedAnswerSlots.push(allSlotIndices.length - i);
     }
   }
-  // This needs to be called after `blockedAnswerSlots` is populated
   ui.updateBlockedSlotsDisplay(blockedAnswerSlots);
 
   targetScore =
@@ -143,62 +152,29 @@ function startNewRound() {
 }
 
 function resetBoardForNewRound() {
-  // Calculate how many black tiles are already in the bag.
-  const currentBlackTiles = letterBag.filter((t) => t.isBlackTile).length;
-  // Get the target number of black tiles for the current round from the config.
-  const targetBlackTiles = cfg.BLACK_TILES_PER_ROUND(currentRound);
-  // Only add the difference to reach the target.
-  const blackTilesToAdd = Math.max(0, targetBlackTiles - currentBlackTiles);
+  createLetterBag(); // Rebuild the bag with all current rules.
 
-  for (let i = 0; i < blackTilesToAdd; i++) {
-    letterBag.push({ letter: "BLACK", points: 0, isBlackTile: true });
-  }
-
-  // Clear the board and refill from the bag.
+  // Clear the board and refill from the newly created bag.
   document.querySelectorAll(".letter-tile").forEach((t) => t.remove());
   document.querySelectorAll(".grid-slot").forEach((s) => (s.innerHTML = ""));
   refillGrid();
 }
 
-// Replace the existing createLetterBag function
 function createLetterBag() {
-  letterBag = [];
-  for (const letter in cfg.letterDistribution)
-    for (let i = 0; i < cfg.letterDistribution[letter].c; i++)
-      letterBag.push({
-        letter,
-        points: cfg.letterDistribution[letter].p,
-        isBoosted: false,
-        isNerfed: false,
-      });
+  // Start with the persistent, potentially modified, letter tiles
+  letterBag = [...gameTiles];
 
-  for (let i = 0; i < playerPowerups.wildcards; i++)
+  // Add wildcards for this round
+  for (let i = 0; i < playerPowerups.wildcards; i++) {
     letterBag.push({
       letter: "*",
       points: 0,
       isBoosted: false,
       isNerfed: false,
     });
+  }
 
-  // Apply boosts
-  playerPowerups.pointBoosts.forEach(() => {
-    const tileIndex = Math.floor(Math.random() * letterBag.length);
-    if (letterBag[tileIndex].letter !== "*") {
-      letterBag[tileIndex].points++;
-      letterBag[tileIndex].isBoosted = true;
-    }
-  });
-
-  // Apply nerfs
-  playerPowerups.pointNerfs.forEach(() => {
-    const tileIndex = Math.floor(Math.random() * letterBag.length);
-    const tile = letterBag[tileIndex];
-    if (tile.letter !== "*" && tile.points > 0) {
-      tile.points--;
-      tile.isNerfed = true;
-    }
-  });
-
+  // Add black tiles for this round
   let blackTileCount =
     cfg.BLACK_TILES_PER_ROUND(currentRound) + playerPowerups.blackTileModifier;
   if (blackTileCount < 0) blackTileCount = 0;
@@ -206,6 +182,7 @@ function createLetterBag() {
   for (let i = 0; i < blackTileCount; i++) {
     letterBag.push({ letter: "BLACK", points: 0, isBlackTile: true });
   }
+
   calculateAndDisplayBagStats();
 }
 
@@ -239,6 +216,8 @@ export function handleRedraw() {
   // Return letters from the answer area to the bag
   document.querySelectorAll("#answer-area .letter-tile").forEach((tile) => {
     const pointsSpan = tile.querySelector(".letter-points");
+    // This part is tricky. The returned tile is a copy. We need to find the original.
+    // For simplicity, we just push a representation back. The persistent state is in gameTiles.
     letterBag.push({
       letter: tile.dataset.letter,
       points: parseInt(tile.dataset.points, 10),
@@ -297,7 +276,6 @@ export function handleSubmitWord() {
     ui.ui.roundScoreDisplay.textContent = roundScore;
     ui.flashTiles(placedTiles, "green");
 
-    // Update game stats
     if (word.length > longestWord.length) {
       longestWord = { word, length: word.length };
     }
@@ -312,28 +290,6 @@ export function handleSubmitWord() {
         t.remove();
       });
       refillGrid(placedTiles.length);
-
-      if (currentRound >= 0) {
-        const blockedConfig = cfg.BLOCKED_SLOTS_PER_ROUND[currentRound];
-        if (blockedConfig) {
-          const numBlockedSlots =
-            Math.floor(
-              Math.random() * (blockedConfig.max - blockedConfig.min + 1),
-            ) + blockedConfig.min;
-          const allSlotIndices = Array.from(
-            { length: cfg.ANSWER_SLOTS },
-            (_, i) => i,
-          );
-
-          blockedAnswerSlots = []; // Clear previous
-          // Randomly select indices to block
-          for (let i = 0; i < numBlockedSlots; i++) {
-            blockedAnswerSlots.push(allSlotIndices.length - i);
-          }
-        }
-      }
-      ui.updateBlockedSlotsDisplay(blockedAnswerSlots);
-      ui.updateMultiplierDisplay(playerPowerups.positionalMultiplier);
 
       const roundComplete = roundScore >= targetScore;
       if (roundComplete && currentRound < cfg.TOTAL_ROUNDS) {
@@ -355,7 +311,6 @@ export function handleSubmitWord() {
 }
 
 export function checkAnswerLength() {
-  // Only count tiles in unblocked slots
   const wordLength = Array.from(
     ui.ui.answerArea.querySelectorAll(".answer-slot"),
   ).filter(
@@ -391,18 +346,19 @@ function choosePowerup() {
       shorttext: "+1 Wildcard",
       apply: () => {
         playerPowerups.wildcards++;
-        const specialTiles = letterBag.filter(
-          (t) => t.isBlackTile || t.letter === "*" || t.isBoosted || t.isNerfed,
-        );
         createLetterBag();
-        letterBag.push(...specialTiles);
       },
     },
     {
       id: "pointboost",
       text: "+1 to a random letter tile",
       shorttext: "Letter Point Boost",
-      apply: () => playerPowerups.pointBoosts.push(1),
+      apply: () => {
+        const tileIndex = Math.floor(Math.random() * gameTiles.length);
+        const tile = gameTiles[tileIndex];
+        tile.points++;
+        tile.isBoosted = true;
+      },
     },
   ];
 
@@ -433,7 +389,13 @@ function choosePowerup() {
     text: "-1 to a random letter tile for +1 play",
     shorttext: "+1 Play (letter point nerf)",
     apply: () => {
-      playerPowerups.pointNerfs.push(1);
+      const eligibleTiles = gameTiles.filter((t) => t.points > 0);
+      if (eligibleTiles.length > 0) {
+        const tile =
+          eligibleTiles[Math.floor(Math.random() * eligibleTiles.length)];
+        tile.points--;
+        tile.isNerfed = true;
+      }
       updatePlays(1);
     },
   });
@@ -444,11 +406,7 @@ function choosePowerup() {
       shorttext: "Auto-Refill Bag",
       apply: () => {
         playerPowerups.autoRefill = true;
-        const specialTiles = letterBag.filter(
-          (t) => t.isBlackTile || t.letter === "*" || t.isBoosted || t.isNerfed,
-        );
         createLetterBag();
-        letterBag.push(...specialTiles);
       },
     });
   }
