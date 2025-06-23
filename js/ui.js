@@ -40,6 +40,12 @@ export const ui = {
   menuLongestWord: document.getElementById("menu-longest-word"),
   menuHighestScoreWord: document.getElementById("menu-highest-score-word"),
   menuMissedLongestWord: document.getElementById("menu-missed-longest-word"),
+  menuMissedHighestScoreWordUrl: document.getElementById(
+    "menu-missed-highest-score-word-url",
+  ),
+  menuMissedLongestWordUrl: document.getElementById(
+    "menu-missed-longest-word-url",
+  ),
   menuMissedHighestScoreWord: document.getElementById(
     "menu-missed-highest-score-word",
   ),
@@ -296,11 +302,46 @@ export function showMenuModal() {
     : "-";
   ui.menuMissedHighestScoreWord.textContent = stats.lastMissedHighestScoreWord
     .word
-    ? `${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${stats.lastMissedHighestScoreWord.score} pts)`
+    ? `${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${
+        stats.lastMissedHighestScoreWord.score
+      } pts)`
     : "-";
+
+  const languageNames = {
+    en: "English",
+    de: "German",
+    es: "Spanish",
+    fr: "French",
+    ca: "Catalan",
+  };
+  const languageName = languageNames[game.currentGameLanguage] || "English";
+
+  if (stats.lastMissedHighestScoreWord.word) {
+    const query = `define "${stats.lastMissedHighestScoreWord.word}" in ${languageName}`;
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+      query,
+    )}`;
+    ui.menuMissedHighestScoreWordUrl.href = searchUrl;
+    ui.menuMissedHighestScoreWordUrl.style.display = "block";
+  } else {
+    ui.menuMissedHighestScoreWordUrl.style.display = "none";
+  }
   ui.menuMissedLongestWord.textContent = stats.lastMissedLongestWord.word
-    ? `${stats.lastMissedLongestWord.word.toUpperCase()} (${stats.lastMissedLongestWord.length})`
+    ? `${stats.lastMissedLongestWord.word.toUpperCase()} (${
+        stats.lastMissedLongestWord.length
+      })`
     : "-";
+
+  if (stats.lastMissedLongestWord.word) {
+    const query = `define "${stats.lastMissedLongestWord.word}" in ${languageName}`;
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+      query,
+    )}`;
+    ui.menuMissedLongestWordUrl.href = searchUrl;
+    ui.menuMissedLongestWordUrl.style.display = "block";
+  } else {
+    ui.menuMissedLongestWordUrl.style.display = "none";
+  }
 
   if (!document.getElementById("language-selector-container")) {
     const settingsSection = document.createElement("div");

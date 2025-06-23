@@ -1,4 +1,4 @@
-const CACHE_NAME = "mots-cache-v0.2.0";
+const CACHE_NAME = "mots-cache-v0.2.1";
 const urlsToCache = [
   "./",
   "./index.html",
@@ -23,6 +23,7 @@ const urlsToCache = [
   "./dict/words_de.txt",
   "./dict/words_es.txt",
   "./dict/words_fr.txt",
+  "./goog-icon.png",
 ];
 
 // Install event: opens a cache and adds the core files to it.
