@@ -47,7 +47,8 @@ export const ui = {
 export function updateCurrentWordScore(score) {
   if (ui.currentWordScoreDisplay) {
     if (score > 0) {
-      ui.currentWordScoreDisplay.textContent = `${score} pts`;
+      const suffix = score == 1 ? "pt" : "pts";
+      ui.currentWordScoreDisplay.textContent = `${score} ${suffix}`;
     } else {
       ui.currentWordScoreDisplay.textContent = "";
     }
