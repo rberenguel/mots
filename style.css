@@ -770,9 +770,8 @@ kbd {
 
 #menu-powerups-list li {
   background-color: var(--tile-bg);
-  padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
 }
 
 .menu-section p {

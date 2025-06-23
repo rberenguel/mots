@@ -33,6 +33,7 @@ export const ui = {
   menuButton: document.getElementById("menu-button"),
   menuModal: document.getElementById("menu-modal"),
   menuStats: document.getElementById("menu-stats"),
+  menuRound: document.getElementById("menu-round"),
   menuCloseButton: document.getElementById("menu-close-button"),
   menuRestartButton: document.getElementById("menu-restart-button"),
   menuPowerupsList: document.getElementById("menu-powerups-list"),
@@ -279,6 +280,7 @@ export function showMenuModal() {
   }
 
   // Populate best words stats
+  ui.menuRound.textContent = game.currentRound;
   ui.menuLongestWord.textContent = stats.longestWord.word || "-";
   ui.menuHighestScoreWord.textContent = stats.highestScore.word
     ? `${stats.highestScore.word} (${stats.highestScore.score} pts)`
