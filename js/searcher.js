@@ -72,6 +72,9 @@ function findBestWord(strategy) {
   const tileCounts = {};
   letterElements.forEach((tile) => {
     const tileUpper = tile.dataset.letter;
+    if (!tileUpper) {
+      return;
+    }
     tileCounts[tileUpper] = (tileCounts[tileUpper] || 0) + 1;
   });
 

@@ -55,7 +55,7 @@ export function addEventListeners() {
       // Set the fade-out to begin after the text has been visible for a bit
       setTimeout(() => {
         ui.missedText.style.opacity = 0;
-      }, 7000);
+      }, 5000);
     }
   });
   addHelpModalListeners();

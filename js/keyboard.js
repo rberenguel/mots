@@ -1,5 +1,10 @@
 import { ui, shuffleGridAnimation } from "./ui.js";
-import { checkAnswerLength, handleSubmitWord, handleRedraw } from "./game.js";
+import {
+  checkAnswerLength,
+  handleSubmitWord,
+  handleRedraw,
+  getGameStats,
+} from "./game.js";
 
 const pendingAnimations = new Map();
 
@@ -34,7 +39,30 @@ function handleKeyDown(e) {
   } else if (e.key === "Enter") {
     e.preventDefault();
     if (!ui.submitWordButton.disabled) {
-      handleSubmitWord();
+      const sent = handleSubmitWord();
+      if (sent) {
+        let missedText = "";
+        const stats = getGameStats();
+        missedText += stats.lastMissedLongestWord.word
+          ? `<p><span class="missed">missed:</span> <span class="missed-word">${stats.lastMissedLongestWord.word.toUpperCase()} (${
+              stats.lastMissedLongestWord.length
+            })</span></p>`
+          : "";
+        missedText += stats.lastMissedHighestScoreWord.word
+          ? `<p><p><span class="missed">missed:</span>  <span class="missed-word">${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${
+              stats.lastMissedHighestScoreWord.score
+            } pts)</span></p>`
+          : "";
+        ui.missedText.innerHTML = missedText;
+        setTimeout(() => {
+          ui.missedText.style.opacity = "1";
+        }, 2);
+
+        // Set the fade-out to begin after the text has been visible for a bit
+        setTimeout(() => {
+          ui.missedText.style.opacity = 0;
+        }, 5000);
+      }
     }
   } else if (e.key === "Tab") {
     e.preventDefault();

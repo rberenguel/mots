@@ -32,7 +32,7 @@ body {
 }
 
 .main-container {
-  top: 0.5em;
+  top: 0em;
   position: absolute;
 }
 
@@ -294,7 +294,7 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
-  margin-bottom: 1.1rem;
+  margin-bottom: 0.7rem;
   padding: 0.5rem;
   border-radius: 0.5rem;
   aspect-ratio: 1 / 1;
@@ -307,7 +307,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
 }
 .controls-container > * + * {
   margin-left: 1rem;
@@ -621,7 +621,7 @@ kbd {
 #bag-stats-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
 }
 
 /* Replace the old #bag-stats-display rule with this updated one */
