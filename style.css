@@ -313,6 +313,7 @@ body {
   margin-left: 1rem;
 }
 #answer-container {
+  position: relative;
   background-color: var(--base02);
   padding: 1rem;
   border-radius: 0.5rem;
@@ -320,6 +321,18 @@ body {
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
+
+#current-word-score-display {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-size: 10px;
+  color: var(--yellow);
+  font-weight: 700;
+  z-index: 100;
+  pointer-events: none;
+}
+
 #answer-area {
   display: flex;
   justify-content: center;
@@ -336,6 +349,11 @@ body {
 #shuffle-button i {
   color: var(--orange);
 }
+
+#redraw-button {
+  margin-right: 2em;
+}
+
 #redraw-button i {
   color: var(--cyan);
 }

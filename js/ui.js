@@ -38,7 +38,20 @@ export const ui = {
   menuPowerupsList: document.getElementById("menu-powerups-list"),
   menuLongestWord: document.getElementById("menu-longest-word"),
   menuHighestScoreWord: document.getElementById("menu-highest-score-word"),
+  currentWordScoreDisplay: document.getElementById(
+    "current-word-score-display",
+  ),
 };
+
+export function updateCurrentWordScore(score) {
+  if (ui.currentWordScoreDisplay) {
+    if (score > 0) {
+      ui.currentWordScoreDisplay.textContent = `${score} pts`;
+    } else {
+      ui.currentWordScoreDisplay.textContent = "";
+    }
+  }
+}
 
 export function updateBagStatsDisplay(totals, stats) {
   ui.bagTotalDisplay.textContent = stats.total + "/" + totals.total;

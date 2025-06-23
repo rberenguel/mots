@@ -434,6 +434,32 @@ export function handleSubmitWord() {
   }
 }
 
+function calculateCurrentWordScore() {
+  let basePoints = 0;
+  let bonusPoints = 0;
+  let wordPosition = 0;
+
+  ui.ui.answerArea.querySelectorAll(".answer-slot").forEach((slot, index) => {
+    const tile = slot.querySelector(".letter-tile");
+    if (tile) {
+      let tilePoints = parseInt(tile.dataset.points, 10);
+      if (
+        playerPowerups.positionalMultiplier &&
+        wordPosition === playerPowerups.positionalMultiplier.position - 1
+      ) {
+        tilePoints *= playerPowerups.positionalMultiplier.multiplier;
+      }
+      basePoints += tilePoints;
+      wordPosition++;
+
+      if (cfg.bonusSlots[index]) {
+        bonusPoints += cfg.bonusSlots[index];
+      }
+    }
+  });
+  return basePoints + bonusPoints;
+}
+
 export function checkAnswerLength() {
   const wordLength = Array.from(
     ui.ui.answerArea.querySelectorAll(".answer-slot"),
@@ -442,6 +468,12 @@ export function checkAnswerLength() {
       !s.classList.contains("is-blocked") && s.querySelector(".letter-tile"),
   ).length;
   ui.ui.submitWordButton.disabled = wordLength < cfg.MIN_WORD_LENGTH;
+  if (wordLength > 0) {
+    const score = calculateCurrentWordScore();
+    ui.updateCurrentWordScore(score);
+  } else {
+    ui.updateCurrentWordScore(0); // Clear score display when answer is empty
+  }
 }
 
 function isWordValid(word) {
