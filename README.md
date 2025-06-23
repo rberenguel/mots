@@ -18,8 +18,15 @@ The core gameplay loop is simple but challenging:
 - Submitted words must be at least 4 letters long.
 - After successfully completing a round, you get to choose one of two power-ups to help you in the subsequent rounds.
 - Sometimes the last positions of the answer section will not be usable. Life is hard, this game eventually is too.
+- Tapping on the last answer tile (if no letter is present) removes all letters from the answer row.
+- If there are scattered letters with spaces in the answer, tapping on any empty space in-between compacts the spaces.
+- If you are curious about what you missed on the last board, open the menu after you submit your word.
 
 I plan on adding a couple more modifiers, but this will not change much more.
+
+> INFO
+> This is initially designed for mobile (in particular, _my_ mobile phone). If you see any rendering artifacts, let me know.
+> It seems to work well on desktop, I recommend using Chrome just in case since it is where I test it.
 
 ## Controls
 

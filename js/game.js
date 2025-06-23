@@ -1,6 +1,11 @@
 import * as cfg from "./config.js";
 import * as ui from "./ui.js";
 import { triggerHaptic } from "./haptic.js";
+import {
+  buildDictionaryTrie,
+  findHighestScoringWord,
+  findLongestWord,
+} from "./searcher.js";
 
 export let currentGameLanguage = "en"; // Default language
 
@@ -8,6 +13,8 @@ let gameTiles = []; // Holds the persistent state of letter tiles (A-Z) for the 
 let activePowerups = [];
 let longestWord = { word: "", length: 0 };
 let highestScore = { word: "", score: 0 };
+let lastMissedLongestWord = { word: "", length: 0 };
+let lastMissedHighestScoreWord = { word: "", score: 0 };
 let letterBag = [],
   wordList = new Set();
 let totalScore = 0,
@@ -18,7 +25,7 @@ export let currentRound = 0,
   redrawsLeft = 2,
   nextTileId = 0;
 
-let playerPowerups = {
+export let playerPowerups = {
   wildcards: 0,
   blackTileModifier: 0,
   positionalMultiplier: null,
@@ -27,7 +34,7 @@ let playerPowerups = {
   affixes: [],
 };
 
-let blockedAnswerSlots = [];
+export let blockedAnswerSlots = [];
 
 /**
  * Sets a seed word to appear on the next new game's grid.
@@ -60,7 +67,13 @@ const stripVowelAccents = (str) => {
 };
 
 export function getGameStats() {
-  return { activePowerups, longestWord, highestScore };
+  return {
+    activePowerups,
+    longestWord,
+    highestScore,
+    lastMissedHighestScoreWord,
+    lastMissedLongestWord,
+  };
 }
 
 export async function setLanguage(lang) {
@@ -86,6 +99,7 @@ export async function loadCurrentLanguage() {
     console.info(`Loaded word list for language ${currentGameLanguage}`);
     wordList = new Set(words.map((w) => w.trim().toLowerCase().normalize()));
     window.wordList = wordList;
+    buildDictionaryTrie();
   } catch (error) {
     console.error(
       "Failed to load word list for language:",
@@ -110,7 +124,6 @@ export function startGame() {
   activePowerups = [];
   longestWord = { word: "", length: 0 };
   highestScore = { word: "", score: 0 };
-  loadCurrentLanguage();
 
   const distribution = cfg.letterDistributions[currentGameLanguage];
   gameTiles = [];
@@ -367,7 +380,6 @@ export function handleSubmitWord() {
       placedTiles.push(t);
       let letter = t.dataset.letter;
 
-      // ** MODIFIED to handle QU upgrade **
       if (playerPowerups.quUpgrade && letter === "Q") {
         word += "QU";
       } else {
@@ -406,6 +418,12 @@ export function handleSubmitWord() {
     if (wordScore > highestScore.score) {
       highestScore = { word, score: wordScore };
     }
+    const missedLongest = findLongestWord();
+    lastMissedLongestWord = {
+      word: missedLongest,
+      length: missedLongest.length,
+    };
+    lastMissedHighestScoreWord = findHighestScoringWord();
 
     setTimeout(() => {
       placedTiles.forEach((t) => {

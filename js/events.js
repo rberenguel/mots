@@ -5,6 +5,7 @@ import {
   handleSubmitWord,
   checkAnswerLength,
   setLanguage,
+  loadCurrentLanguage,
 } from "./game.js";
 import * as cfg from "./config.js";
 import { triggerHaptic } from "./haptic.js";
@@ -19,6 +20,7 @@ const DRAG_THRESHOLD = 5; // Minimum distance in pixels to trigger a drag
 export function addEventListeners() {
   ui.restartButton.addEventListener("click", () => {
     triggerHaptic();
+    loadCurrentLanguage();
     startGame();
   });
   ui.shuffleButton.addEventListener("click", () => {
@@ -75,7 +77,7 @@ function addMenuModalListeners() {
     if (savedLang) {
       await setLanguage(savedLang);
     }
-
+    loadCurrentLanguage();
     // Now start the game with the correct language
     startGame();
   });

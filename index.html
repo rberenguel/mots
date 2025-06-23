@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <link rel="manifest" href="./manifest.json" />
     <link rel="icon" type="image/png" href="icon.png" />
     <title>Mots</title>
@@ -110,6 +113,16 @@
                 <strong>Best Word:</strong>
                 <span id="menu-highest-score-word">-</span>
               </p>
+              <hr />
+              <h3>Last board you missed…</h3>
+              <p>
+                <strong>Longest Word:</strong>
+                <span id="menu-missed-longest-word">-</span>
+              </p>
+              <p>
+                <strong>Best Word:</strong>
+                <span id="menu-missed-highest-score-word">-</span>
+              </p>
             </div>
           </div>
           <div class="menu-buttons">
@@ -147,7 +160,7 @@
         <h2>How to Play</h2>
         <div class="help-text">
           <p>
-            Got inspired by
+            Inspired by
             <a href="https://en.wikipedia.org/wiki/Boggle">Boggle</a>,
             <a href="https://gamemakerstoolkit.com/">Mark Brown's</a> fantastic
             game,
@@ -187,6 +200,18 @@
           <p>
             • Sometimes the last positions of the answer section will not be
             usable. Life is hard, this game eventually is too.
+          </p>
+          <p>
+            • Tapping on the last answer tile (if there is no letter) removes
+            all tiles from the answer row.
+          </p>
+          <p>
+            • If you have scattered letters with empty spaces, tapping on the
+            empty space brings the letters together removing all spaces.
+          </p>
+          <p>
+            • If you are curious to see what you missed in the last board, open
+            the menu after submitting your word.
           </p>
           <hr />
           <p class="help-icon-row">

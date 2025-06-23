@@ -39,6 +39,10 @@ export const ui = {
   menuPowerupsList: document.getElementById("menu-powerups-list"),
   menuLongestWord: document.getElementById("menu-longest-word"),
   menuHighestScoreWord: document.getElementById("menu-highest-score-word"),
+  menuMissedLongestWord: document.getElementById("menu-missed-longest-word"),
+  menuMissedHighestScoreWord: document.getElementById(
+    "menu-missed-highest-score-word",
+  ),
   currentWordScoreDisplay: document.getElementById(
     "current-word-score-display",
   ),
@@ -264,6 +268,7 @@ export function updateLanguageDisplay(lang) {
 
 export function showMenuModal() {
   const stats = getGameStats();
+  console.log(stats);
 
   // Populate powerups
   ui.menuPowerupsList.innerHTML = ""; // Clear existing
@@ -282,9 +287,19 @@ export function showMenuModal() {
 
   // Populate best words stats
   ui.menuRound.textContent = game.currentRound;
-  ui.menuLongestWord.textContent = stats.longestWord.word || "-";
+  console.log(JSON.stringify(stats));
+  ui.menuLongestWord.textContent = stats.longestWord.word
+    ? `${stats.longestWord.word} (${stats.longestWord.length})`
+    : "-";
   ui.menuHighestScoreWord.textContent = stats.highestScore.word
     ? `${stats.highestScore.word} (${stats.highestScore.score} pts)`
+    : "-";
+  ui.menuMissedHighestScoreWord.textContent = stats.lastMissedHighestScoreWord
+    .word
+    ? `${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${stats.lastMissedHighestScoreWord.score} pts)`
+    : "-";
+  ui.menuMissedLongestWord.textContent = stats.lastMissedLongestWord.word
+    ? `${stats.lastMissedLongestWord.word.toUpperCase()} (${stats.lastMissedLongestWord.length})`
     : "-";
 
   if (!document.getElementById("language-selector-container")) {

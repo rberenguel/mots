@@ -5,6 +5,11 @@ import { initializeKeyboard } from "./keyboard.js"; // Add this line
 import { props } from "./config.js";
 import { ui } from "./ui.js";
 import { get } from "../lib/idb-keyval.js";
+import {
+  buildDictionaryTrie,
+  findLongestWord,
+  findHighestScoringWord,
+} from "./searcher.js";
 
 async function fetchSelfManifest() {
   try {
@@ -44,4 +49,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   initializeKeyboard();
   fetchSelfManifest();
   window.forcePowerup = forceApplyPowerup;
+  window.findLongestWord = findLongestWord;
+  window.findHighestScoringWord = findHighestScoringWord;
 });
