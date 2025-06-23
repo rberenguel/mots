@@ -374,7 +374,9 @@ export function handleSubmitWord() {
     placedTiles = [];
   let wordPosition = 0;
 
-  ui.ui.answerArea.querySelectorAll(".answer-slot").forEach((s) => {
+  const answerSlots = ui.ui.answerArea.querySelectorAll(".answer-slot");
+
+  for (const s of answerSlots) {
     const t = s.querySelector(".letter-tile");
     if (t) {
       placedTiles.push(t);
@@ -394,12 +396,16 @@ export function handleSubmitWord() {
         tilePoints *= playerPowerups.positionalMultiplier.multiplier;
       }
       basePoints += tilePoints;
-      wordPosition++;
 
-      if (cfg.bonusSlots[s.dataset.index])
+      if (cfg.bonusSlots[s.dataset.index]) {
         bonusPoints += cfg.bonusSlots[s.dataset.index];
+      }
+      wordPosition++;
+    } else {
+      // First empty slot marks the end of the word.
+      break;
     }
-  });
+  }
 
   if (word.length < cfg.MIN_WORD_LENGTH) return;
   triggerHaptic();
@@ -444,6 +450,7 @@ export function handleSubmitWord() {
 
       checkAnswerLength();
     }, 1000);
+    return true;
   } else {
     ui.flashTiles(placedTiles, "red");
     if (totalPlays <= 0) {

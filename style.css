@@ -753,6 +753,10 @@ kbd {
   margin-bottom: 1.5rem;
 }
 
+.menu-section > p {
+  margin-block-start: 0.1em;
+}
+
 .menu-section h3 {
   margin-top: 0;
   margin-bottom: 0.75rem;
@@ -798,4 +802,29 @@ kbd {
 
 .search-icon {
   height: 1.5em;
+}
+
+#missed {
+  font-size: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+  text-align: center;
+  margin-bottom: 1em;
+  min-height: 30px;
+  opacity: 0; /* Start fully transparent */
+  transition: opacity 1.5s ease-out; /* Added 's' for seconds */
+}
+
+#missed > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.missed {
+  color: var(--cyan);
+}
+
+.missed-word {
+  color: var(--orange);
 }

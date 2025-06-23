@@ -6,6 +6,7 @@ import {
   checkAnswerLength,
   setLanguage,
   loadCurrentLanguage,
+  getGameStats,
 } from "./game.js";
 import * as cfg from "./config.js";
 import { triggerHaptic } from "./haptic.js";
@@ -31,7 +32,32 @@ export function addEventListeners() {
     triggerHaptic();
     handleRedraw();
   });
-  ui.submitWordButton.addEventListener("click", handleSubmitWord);
+  ui.submitWordButton.addEventListener("click", () => {
+    const sent = handleSubmitWord();
+    if (sent) {
+      let missedText = "";
+      const stats = getGameStats();
+      missedText += stats.lastMissedLongestWord.word
+        ? `<p><span class="missed">missed:</span> <span class="missed-word">${stats.lastMissedLongestWord.word.toUpperCase()} (${
+            stats.lastMissedLongestWord.length
+          })</span></p>`
+        : "";
+      missedText += stats.lastMissedHighestScoreWord.word
+        ? `<p><p><span class="missed">missed:</span>  <span class="missed-word">${stats.lastMissedHighestScoreWord.word.toUpperCase()} (${
+            stats.lastMissedHighestScoreWord.score
+          } pts)</span></p>`
+        : "";
+      ui.missedText.innerHTML = missedText;
+      setTimeout(() => {
+        ui.missedText.style.opacity = "1";
+      }, 2);
+
+      // Set the fade-out to begin after the text has been visible for a bit
+      setTimeout(() => {
+        ui.missedText.style.opacity = 0;
+      }, 7000);
+    }
+  });
   addHelpModalListeners();
   addMenuModalListeners();
   addTileInteractionListeners();

@@ -52,6 +52,7 @@ export const ui = {
   currentWordScoreDisplay: document.getElementById(
     "current-word-score-display",
   ),
+  missedText: document.getElementById("missed"),
 };
 
 export function updateCurrentWordScore(score) {
@@ -306,6 +307,11 @@ export function showMenuModal() {
         stats.lastMissedHighestScoreWord.score
       } pts)`
     : "-";
+  ui.menuMissedLongestWord.textContent = stats.lastMissedLongestWord.word
+    ? `${stats.lastMissedLongestWord.word.toUpperCase()} (${
+        stats.lastMissedLongestWord.length
+      })`
+    : "-";
 
   const languageNames = {
     en: "English",
@@ -326,11 +332,6 @@ export function showMenuModal() {
   } else {
     ui.menuMissedHighestScoreWordUrl.style.display = "none";
   }
-  ui.menuMissedLongestWord.textContent = stats.lastMissedLongestWord.word
-    ? `${stats.lastMissedLongestWord.word.toUpperCase()} (${
-        stats.lastMissedLongestWord.length
-      })`
-    : "-";
 
   if (stats.lastMissedLongestWord.word) {
     const query = `define "${stats.lastMissedLongestWord.word}" in ${languageName}`;
