@@ -172,7 +172,7 @@ export const affixTiles = {
   ca: [
     { letters: "ANT", points: 2 },
     { letters: "INT", points: 2 },
-    { letters: "ACIÓ", points: 3 },
+    { letters: "ACIO", points: 3 },
   ],
   fr: [
     { letters: "EUR", points: 2 },
