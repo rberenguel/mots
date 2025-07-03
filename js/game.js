@@ -92,8 +92,14 @@ export async function loadCurrentLanguage() {
     const text = await response.text();
     let words = text.split("\n");
 
-    // For FR, ES, CA, strip accents from dictionary words. For DE, keep them to preserve umlauts.
-    if (["fr", "es", "ca"].includes(currentGameLanguage)) {
+    if (currentGameLanguage === "ca") {
+      // Replace the flying dot of L geminada by nothing.
+      // "col·legi" becomes "collegi"
+      words = words.map((word) => word.replace(/·/g, ""));
+    }
+
+    // For FR, ES, CA, IT strip accents from dictionary words. For DE, keep them to preserve umlauts.
+    if (["fr", "es", "ca", "it"].includes(currentGameLanguage)) {
       words = words.map(stripVowelAccents);
     }
     console.info(`Loaded word list for language ${currentGameLanguage}`);

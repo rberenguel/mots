@@ -140,6 +140,35 @@ export const letterDistributions = {
     X: { c: 1, p: 10 },
     Y: { c: 1, p: 10 },
   },
+  it: {
+    A: { c: 14, p: 1 },
+    B: { c: 3, p: 5 },
+    C: { c: 6, p: 2 },
+    D: { c: 3, p: 5 },
+    E: { c: 14, p: 1 },
+    F: { c: 3, p: 5 },
+    G: { c: 2, p: 8 },
+    H: { c: 2, p: 8 },
+    I: { c: 14, p: 1 },
+    L: { c: 6, p: 3 },
+    M: { c: 6, p: 3 },
+    N: { c: 6, p: 3 },
+    O: { c: 14, p: 1 },
+    P: { c: 3, p: 5 },
+    Q: { c: 2, p: 10 },
+    R: { c: 6, p: 2 },
+    S: { c: 6, p: 2 },
+    T: { c: 6, p: 2 },
+    U: { c: 6, p: 3 },
+    V: { c: 3, p: 5 },
+    Z: { c: 2, p: 8 },
+    // Foreign letters included in the game
+    J: { c: 1, p: 10 },
+    K: { c: 1, p: 10 },
+    W: { c: 1, p: 10 },
+    X: { c: 1, p: 10 },
+    Y: { c: 1, p: 10 },
+  },
 };
 
 export const alphabets = {
@@ -148,6 +177,7 @@ export const alphabets = {
   es: "abcdefghijklmnñopqrstuvwxyz",
   fr: "abcdefghijklmnopqrstuvwxyzç",
   ca: "abcdefghijklmnopqrstuvwxyzç",
+  it: "abcdefghijklmnopqrstuvwxyz",
 };
 
 export const flags = {
@@ -156,6 +186,7 @@ export const flags = {
   es: "🇪🇸",
   fr: "🇫🇷",
   ca: "🇦🇩",
+  it: "🇮🇹",
 };
 
 export const affixTiles = {
@@ -183,6 +214,13 @@ export const affixTiles = {
     { letters: "UNG", points: 2 },
     { letters: "HEIT", points: 2 },
     { letters: "LICH", points: 2 },
+  ],
+  it: [
+    { letters: "ARE", points: 2 },
+    { letters: "ERE", points: 2 },
+    { letters: "IRE", points: 2 },
+    { letters: "MENTO", points: 3 },
+    { letters: "ZIONE", points: 3 },
   ],
 };
 

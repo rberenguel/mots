@@ -318,6 +318,7 @@ export function showMenuModal() {
     de: "German",
     es: "Spanish",
     fr: "French",
+    it: "Italian",
     ca: "Catalan",
   };
   const languageName = languageNames[game.currentGameLanguage] || "English";
@@ -355,6 +356,7 @@ export function showMenuModal() {
         <option value="de">German</option>
         <option value="es">Spanish</option>
         <option value="fr">French</option>
+        <option value="it">Italian</option>
         <option value="ca">Catalan</option>
       </select>
       <div id="lang-change-notice" class="lang-notice"></div>

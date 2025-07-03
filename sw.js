@@ -1,4 +1,4 @@
-const CACHE_NAME = "mots-cache-v0.2.5";
+const CACHE_NAME = "mots-cache-v0.2.6";
 const urlsToCache = [
   "./",
   "./index.html",
@@ -23,6 +23,7 @@ const urlsToCache = [
   "./dict/words_de.txt",
   "./dict/words_es.txt",
   "./dict/words_fr.txt",
+  "./dict/words_it.txt",
   "./goog-icon.png",
 ];
 

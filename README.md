@@ -4,9 +4,18 @@ Got inspired by [Boggle](https://en.wikipedia.org/wiki/Boggle), [Mark Brown's](h
 
 `Mots` is designed to be a quick game you can pick up, play for 5 minutes, and put down—ideal for short daily pauses. Or for binging, but I tried to keep it a light game where you don't need to plan much ahead.
 
-I highly recommend you wishlist and buy Mark's game on Steam; it's good stuff!
+I highly recommend you wishlist and buy Mark's game on Steam once available; it's good stuff!
 
 Gemini did a lot of the heavy lifting here at the beginning.
+
+The following languages are currently supported (the quality of the word dictionaries varies among them):
+
+- English
+- German
+- French
+- Spanish
+- Catalan
+- Italian
 
 ## How to Play
 

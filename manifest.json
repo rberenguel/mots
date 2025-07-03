@@ -1,8 +1,8 @@
 {
   "short_name": "Mots",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "name": "Mots",
-  "description": "Gemini created version of certain game not available for mobile",
+  "description": "Gemini powered version of certain game not available for mobile",
   "icons": [
     {
       "src": "icon.png",
