@@ -1,4 +1,4 @@
-const CACHE_NAME = "mots-cache-v0.2.6";
+const CACHE_NAME = "mots-cache-v0.2.7";
 const urlsToCache = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const urlsToCache = [
   "./js/haptic.js",
   "./js/keyboard.js",
   "./js/main.js",
+  "./js/searcher.js",
   "./js/ui.js",
   "./lib/idb-keyval.js",
   "./icon.png",

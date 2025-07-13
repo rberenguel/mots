@@ -143,7 +143,12 @@ function addTileInteractionListeners() {
 
 function handleGridClick(e) {
   const clickedTile = e.target.closest(".letter-tile");
-  if (!clickedTile || clickedTile.classList.contains("black-tile")) return;
+  if (
+    !clickedTile ||
+    clickedTile.classList.contains("black-tile") ||
+    clickedTile.classList.contains("is-animating")
+  )
+    return;
   triggerHaptic();
 
   // Return tile to grid by clicking the ghost
@@ -165,6 +170,7 @@ function handleGridClick(e) {
   );
 
   if (emptySlot) {
+    clickedTile.classList.add("is-animating");
     const startRect = clickedTile.getBoundingClientRect();
     const targetRect = emptySlot.getBoundingClientRect();
     const animatedClone = clickedTile.cloneNode(true);
@@ -185,6 +191,7 @@ function handleGridClick(e) {
     setTimeout(() => {
       animatedClone.remove();
       placeTileInAnswer(clickedTile, emptySlot);
+      clickedTile.classList.remove("is-animating");
     }, 210);
   }
 }
